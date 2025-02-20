@@ -1,0 +1,53 @@
+version: 1
+applications:
+  - backend:
+      phases:
+        preBuild:
+          commands:
+            - cd cdk
+            # Set up Python virtual environment
+            - python3 -m venv .venv
+            - source .venv/bin/activate
+            # Install Python dependencies
+            - pip install -r requirements.txt
+            # Install AWS CDK CLI
+            - npm install -g aws-cdk
+            # Login to ECR Public
+            - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
+            # Bootstrap CDK if needed (this will skip if already bootstrapped)
+            - cdk bootstrap || true
+        build:
+          commands:
+            # Synthesize CloudFormation template
+            - cdk synth
+            # Deploy all stacks
+            - cdk deploy --all --require-approval never
+      artifacts:
+        baseDirectory: cdk/cdk.out
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - cdk/.venv/**/*
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - cd frontend
+            - npm ci
+        build:
+          commands:
+            # Get outputs from CloudFormation (adjust stack name as needed)
+            #- export API_URL=$(aws cloudformation describe-stacks --stack-name MyStack-dev --query 'Stacks[0].Outputs[?ExportName==`ApiUrl-dev`].OutputValue' --output text)
+            #- export USER_POOL_ID=$(aws cloudformation describe-stacks --stack-name MyStack-dev --query 'Stacks[0].Outputs[?ExportName==`UserPoolId-dev`].OutputValue' --output text)
+            # Create environment file
+            #- echo "VITE_API_URL=$API_URL" >> .env
+            #- echo "VITE_USER_POOL_ID=$USER_POOL_ID" >> .env
+            - npm run build
+      artifacts:
+        baseDirectory: frontend/dist
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - frontend/node_modules/**/*
