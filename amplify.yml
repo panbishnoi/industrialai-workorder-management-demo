@@ -8,6 +8,21 @@ applications:
             - npm ci --legacy-peer-deps
         build:
           commands:
+            # Create .env file with all variables
+            - |
+              cat << EOF > .env
+              VITE_API_ENDPOINT="https://dj1hv307r6.execute-api.us-east-1.amazonaws.com/api/"
+              VITE_WORKORDER_API_ENDPOINT="https://p6scvkrnzg.execute-api.us-east-1.amazonaws.com/api/"
+              VITE_REGION_NAME="us-east-1"
+              VITE_COGNITO_USER_POOL_ID="us-east-1_ZYd08gN3a"
+              VITE_COGNITO_USER_POOL_CLIENT_ID="5dao9o0i02bhv1t9ttv19mlj15"
+              VITE_COGNITO_IDENTITY_POOL_ID="us-east-1:703fa8e8-d34c-40ee-9ce5-9ec2744a1c40"
+              VITE_API_NAME="RestAPI"
+              VITE_APP_NAME="Field Workforce safety assistant"
+              VITE_WorkOrder_API_NAME="WorkOrderAPI"
+              VITE_PROTOTYPE_NAME="WorkOrderSafetyDemo"
+              VITE_COGNITO_DOMAIN=".auth.us-east-1.amazoncognito.com/"
+              EOF
             - npm run build
       artifacts:
         baseDirectory: dist
