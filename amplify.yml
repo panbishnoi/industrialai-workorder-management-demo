@@ -1,5 +1,27 @@
 version: 1
 applications:
+  - appRoot: cdk
+    backend:
+      phases:
+        preBuild:
+          commands:
+            - python3 -m venv .venv
+            - source .venv/bin/activate
+            - pip install -r requirements.txt
+            - npm install -g aws-cdk
+            - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
+            - cdk bootstrap || true
+        build:
+          commands:
+            - cdk synth
+            - cdk deploy --all --require-approval never
+      artifacts:
+        baseDirectory: cdk.out
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - .venv/**/*
   - appRoot: frontend
     frontend:
       phases:
@@ -7,7 +29,7 @@ applications:
           commands:
             - npm ci --legacy-peer-deps
         build:
-          commands:
+          commands:å
             # Create .env file with all variables
             - |
               cat << EOF > .env
@@ -31,25 +53,3 @@ applications:
       cache:
         paths:
           - node_modules/**/*
-  - appRoot: cdk
-    backend:
-      phases:
-        preBuild:
-          commands:
-            - python3 -m venv .venv
-            - source .venv/bin/activate
-            - pip install -r requirements.txt
-            - npm install -g aws-cdk
-            - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
-            - cdk bootstrap || true
-        build:
-          commands:
-            - cdk synth
-            - cdk deploy --all --require-approval never
-      artifacts:
-        baseDirectory: cdk.out
-        files:
-          - '**/*'
-      cache:
-        paths:
-          - .venv/**/*
