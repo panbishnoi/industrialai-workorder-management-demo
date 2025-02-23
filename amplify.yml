@@ -1,56 +1,54 @@
 version: 1
-appRoot: .
-applications:
-  - appRoot: cdk
-    backend:
-      phases:
-        preBuild:
-          commands:
-            - python3 -m venv .venv
-            - source .venv/bin/activate
-            - pip install -r requirements.txt
-            - npm install -g aws-cdk
-            - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
-            - cdk bootstrap || true
-        build:
-          commands:
-            - cdk synth
-            - cdk deploy --all --require-approval never
-      artifacts:
-        baseDirectory: cdk.out
-        files:
-          - '**/*'
-      cache:
-        paths:
-          - .venv/**/*
-  - appRoot: frontend
-    frontend:
-      phases:
-        preBuild:
-          commands:
-            - npm ci --legacy-peer-deps
-        build:
-          commands:
-            # Create .env file with all variables
-            - |
-              cat << EOF > .env
-              VITE_API_ENDPOINT="https://dj1hv307r6.execute-api.us-east-1.amazonaws.com/api/"
-              VITE_WORKORDER_API_ENDPOINT="https://p6scvkrnzg.execute-api.us-east-1.amazonaws.com/api/"
-              VITE_REGION_NAME="us-east-1"
-              VITE_COGNITO_USER_POOL_ID="us-east-1_ZYd08gN3a"
-              VITE_COGNITO_USER_POOL_CLIENT_ID="5dao9o0i02bhv1t9ttv19mlj15"
-              VITE_COGNITO_IDENTITY_POOL_ID="us-east-1:703fa8e8-d34c-40ee-9ce5-9ec2744a1c40"
-              VITE_API_NAME="RestAPI"
-              VITE_APP_NAME="Field Workforce safety assistant"
-              VITE_WorkOrder_API_NAME="WorkOrderAPI"
-              VITE_PROTOTYPE_NAME="WorkOrderSafetyDemo"
-              VITE_COGNITO_DOMAIN=".auth.us-east-1.amazoncognito.com/"
-              EOF
-            - npm run build
-      artifacts:
-        baseDirectory: dist
-        files:
-          - '**/*'
-      cache:
-        paths:
-          - node_modules/**/*
+backend:
+  phases:
+    preBuild:
+      commands:
+        - cd cdk
+        - python3 -m venv .venv
+        - source .venv/bin/activate
+        - pip install -r requirements.txt
+        - npm install -g aws-cdk
+        - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
+    build:
+      commands:
+        - cdk bootstrap || true
+        - cdk synth
+        - cdk deploy --all --require-approval never
+  artifacts:
+    baseDirectory: cdk/cdk.out
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - cdk/.venv/**/*
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - cd frontend
+        - npm ci --legacy-peer-deps
+    build:
+      commands:
+        - |
+          cat << EOF > .env
+          VITE_API_ENDPOINT="https://dj1hv307r6.execute-api.us-east-1.amazonaws.com/api/"
+          VITE_WORKORDER_API_ENDPOINT="https://p6scvkrnzg.execute-api.us-east-1.amazonaws.com/api/"
+          VITE_REGION_NAME="us-east-1"
+          VITE_COGNITO_USER_POOL_ID="us-east-1_ZYd08gN3a"
+          VITE_COGNITO_USER_POOL_CLIENT_ID="5dao9o0i02bhv1t9ttv19mlj15"
+          VITE_COGNITO_IDENTITY_POOL_ID="us-east-1:703fa8e8-d34c-40ee-9ce5-9ec2744a1c40"
+          VITE_API_NAME="RestAPI"
+          VITE_APP_NAME="Field Workforce safety assistant"
+          VITE_WorkOrder_API_NAME="WorkOrderAPI"
+          VITE_PROTOTYPE_NAME="WorkOrderSafetyDemo"
+          VITE_COGNITO_DOMAIN=".auth.us-east-1.amazoncognito.com/"
+          EOF
+        - npm run build
+  artifacts:
+    baseDirectory: frontend/dist
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - frontend/node_modules/**/*
+      - .npm/**/*
