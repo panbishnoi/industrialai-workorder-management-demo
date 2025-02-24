@@ -32,7 +32,7 @@ frontend:
       commands:
         - cd frontend
         # Print cdk-outposts file
-        - cat cdk-outposts.json
+        - cat cdk-outputs.json
         - npm ci --legacy-peer-deps
         # Extract values using pattern matching
         - |
