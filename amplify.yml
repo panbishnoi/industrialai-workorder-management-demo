@@ -3,6 +3,10 @@ backend:
   phases:
     preBuild:
       commands:
+        # Start Docker service
+        - yum install -y docker
+        - systemctl start docker
+        # cd to cdk folder
         - cd cdk
         - python3 -m venv .venv
         - source .venv/bin/activate
