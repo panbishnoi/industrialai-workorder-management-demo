@@ -5,8 +5,10 @@ backend:
       commands:
         # Start Docker service
         - sudo yum install -y docker
-        - sudo systemctl start docker
-        - sudo usermod -a -G docker $USER
+        - sudo nohup dockerd &
+        - sleep 20  # Wait for Docker daemon to start
+        - sudo chmod 666 /var/run/docker.sock  # Fix permissions
+        - docker ps  # Verify Docker is running
         # cd to cdk folder
         - cd cdk
         - python3 -m venv .venv
