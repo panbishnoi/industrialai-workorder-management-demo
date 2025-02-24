@@ -18,8 +18,8 @@ backend:
     build:
       commands:
         - cdk bootstrap || true
-        - cdk synth
         - cdk deploy --all --require-approval never
+        - cd ..  # Go back to root directory
   artifacts:
     baseDirectory: cdk/cdk.out
     files:
