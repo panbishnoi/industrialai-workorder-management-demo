@@ -3,6 +3,7 @@ backend:
   phases:
     preBuild:
       commands:
+        - sudo yum install -y jq
         - sudo yum install -y docker
         - sudo nohup dockerd &
         - sleep 20
@@ -31,7 +32,6 @@ frontend:
       commands:
         - cd frontend
         - npm ci --legacy-peer-deps
-        - yum install -y jq
         # Extract values using pattern matching
         - |
           export API_ENDPOINT=$(jq -r 'to_entries | .[] | select(.key | contains("ApiGatewayRestApiEndpoint")).value' cdk-outputs.json)
