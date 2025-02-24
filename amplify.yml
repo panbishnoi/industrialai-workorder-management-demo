@@ -4,8 +4,9 @@ backend:
     preBuild:
       commands:
         # Start Docker service
-        - yum install -y docker
-        - systemctl start docker
+        - sudo yum install -y docker
+        - sudo systemctl start docker
+        - sudo usermod -a -G docker $USER
         # cd to cdk folder
         - cd cdk
         - python3 -m venv .venv
