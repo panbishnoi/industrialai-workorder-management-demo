@@ -31,6 +31,8 @@ frontend:
     preBuild:
       commands:
         - cd frontend
+        # Print cdk-outposts file
+        - cat cdk-outposts.json
         - npm ci --legacy-peer-deps
         # Extract values using pattern matching
         - |
@@ -56,6 +58,9 @@ frontend:
           VITE_PROTOTYPE_NAME="WorkOrderSafetyDemo"
           VITE_COGNITO_DOMAIN=".auth.us-east-1.amazoncognito.com/"
           EOF
+        # Print generated .env file
+        - echo "Generated .env file:"
+        - cat .env
         - npm run build
   artifacts:
     baseDirectory: frontend/dist
