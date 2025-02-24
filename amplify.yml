@@ -36,12 +36,12 @@ frontend:
         - npm ci --legacy-peer-deps
         # Extract values using pattern matching
         - |
-          export API_ENDPOINT=$(jq -r 'to_entries | .[] | select(.key | contains("ApiGatewayRestApiEndpoint")).value' cdk-outputs.json)
-          export WORKORDER_API_ENDPOINT=$(jq -r 'to_entries | .[] | select(.key | contains("WorkOrderApiGatewayRestApiEndpoint")).value' cdk-outputs.json)
-          export COGNITO_USER_POOL_ID=$(jq -r 'to_entries | .[] | select(.key | contains("CognitoUserPoolId")).value' cdk-outputs.json)
-          export COGNITO_USER_POOL_CLIENT_ID=$(jq -r 'to_entries | .[] | select(.key | contains("CognitoUserPoolClientId")).value' cdk-outputs.json)
-          export COGNITO_IDENTITY_POOL_ID=$(jq -r 'to_entries | .[] | select(.key | contains("CognitoIdentityPoolId")).value' cdk-outputs.json)
-          export REGION_NAME=$(jq -r 'to_entries | .[] | select(.key | contains("RegionName")).value' cdk-outputs.json)
+          export API_ENDPOINT=$(jq -r '.AmplifyMainBackendStack | to_entries[] | select(.key | startswith("ApiGatewayRestApiEndpoint")).value' cdk-outputs.json)
+          export WORKORDER_API_ENDPOINT=$(jq -r '.AmplifyMainBackendStack | to_entries[] | select(.key | startswith("WorkOrderApiGatewayRestApiEndpoint")).value' cdk-outputs.json)
+          export COGNITO_USER_POOL_ID=$(jq -r '.AmplifyMainBackendStack | to_entries[] | select(.key | startswith("CognitoUserPoolId")).value' cdk-outputs.json)
+          export COGNITO_USER_POOL_CLIENT_ID=$(jq -r '.AmplifyMainBackendStack | to_entries[] | select(.key | startswith("CognitoUserPoolClientId")).value' cdk-outputs.json)
+          export COGNITO_IDENTITY_POOL_ID=$(jq -r '.AmplifyMainBackendStack | to_entries[] | select(.key | startswith("CognitoIdentityPoolId")).value' cdk-outputs.json)
+          export REGION_NAME=$(jq -r '.AmplifyMainBackendStack.RegionName' cdk-outputs.json)
     build:
       commands:
         - |
