@@ -10,9 +10,6 @@ export default function NavBar() {
   // Update the type to match fetchUserAttributes output
   const [userAttributes, setUserAttributes] = useState<FetchUserAttributesOutput>({});
 
-  // Extract user details with type assertion to fix TypeScript error
-  const username = user?.username || "User";
-  const emailFromTypeAssertion = (user as any)?.attributes?.email || "";
 
   // Alternative approach using fetchUserAttributes
   useEffect(() => {
@@ -30,14 +27,12 @@ export default function NavBar() {
     }
   }, [user]);
 
-  // Use email from fetchUserAttributes (preferred) or fallback to type assertion approach
-  const email = userAttributes.email || emailFromTypeAssertion || "";
 
   return (
     <TopNavigation
       identity={{
         href: "/",
-        title: "Field Workforce safety assistant",
+        title: env.VITE_APP_NAME,
       }}
       utilities={[
         {
