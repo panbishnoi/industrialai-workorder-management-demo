@@ -1,16 +1,14 @@
 {
-  "name": "field-workforce-safety-demo",
+  "name": "agents-for-energy",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "ecrAuth": "aws ecr-public get-login-password | docker login --username AWS --password-stdin public.ecr.aws",
-    "frontend:dev": "cd frontend && npm run dev",
-    "frontend:build": "cd frontend && npm run build",
-    "cdk:deploy": "cd cdk && npm run cdk deploy",
-    "cdk:build": "cd cdk && npm run build",
-    "install:all": "npm install && npm run install:frontend && npm run install:cdk",
-    "install:frontend": "cd frontend && npm install",
-    "install:cdk": "cd cdk && npm install"
+    "cdkDiff": "cdk diff --ci --app \"npx tsx amplify/backend.ts\" --output .amplify/artifacts/cdk.out --context amplify-backend-name=$(whoami) --context amplify-backend-namespace=$(node -e \"console.log(require('./package.json').name)\") --context amplify-backend-type=sandbox",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   },
   "dependencies": {
     "@aws-amplify/ui-react": "^6.9.1",
@@ -50,10 +48,7 @@
     "remark-gfm": "^4.0.0",
     "sass": "^1.79.4",
     "sharp": "^0.33.5",
-    "yaml": "^2.7.0",
-    "leaflet": "^1.9.4",
-    "react-i18next": "^13.3.1",
-    "react-leaflet": "^4.2.1"
+    "yaml": "^2.7.0"
   },
   "devDependencies": {
     "@aws-amplify/backend": "^1.13.0",
