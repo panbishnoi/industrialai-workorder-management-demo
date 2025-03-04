@@ -28,6 +28,15 @@ export const defaultAgents: { [key: string]: BaseAgent | BedrockAgent | LangGrap
             "In September 2024, what are a few key incidents and actions taken at the biodiesel unit?",
         ],
     } as BedrockAgent,
+    WorkOrderSafety: {
+        name: "WorkOrder Safety Agent",
+        source: "bedrockAgent",
+        agentId: "OKXTFRR08S",
+        agentAliasId: "KZENI6GIPM",
+        samplePrompts: [
+            "Perform work order safety for work order 01"
+        ],
+    } as BedrockAgent,
     ProductionAgent: {
         name: "Production Agent",
         source: "graphql",
