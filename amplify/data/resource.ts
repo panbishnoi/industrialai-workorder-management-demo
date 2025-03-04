@@ -249,10 +249,9 @@ const schema = a.schema({
     .returns(a.ref("WorkOrder").array())
     .authorization((allow) => allow.authenticated())
     .handler(
-      a.handler.function({
-        workOrderFunction
-      })
+      a.handler.function(workOrderFunction)
     )
+
 
     
 }).authorization(allow => [
