@@ -1,0 +1,924 @@
+{
+  "auth": {
+    "user_pool_id": "us-east-1_C8rsHZuTz",
+    "aws_region": "us-east-1",
+    "user_pool_client_id": "ktrqm7jqlfjr9u1spedtoi1k2",
+    "identity_pool_id": "us-east-1:e63fd5cc-9ca5-49b5-9252-f694f24ce638",
+    "mfa_methods": [],
+    "standard_required_attributes": [
+      "email"
+    ],
+    "username_attributes": [
+      "email"
+    ],
+    "user_verification_types": [
+      "email"
+    ],
+    "groups": [],
+    "mfa_configuration": "NONE",
+    "password_policy": {
+      "min_length": 8,
+      "require_lowercase": true,
+      "require_numbers": true,
+      "require_symbols": true,
+      "require_uppercase": true
+    },
+    "unauthenticated_identities_enabled": true
+  },
+  "data": {
+    "url": "https://rw5gjb64ebhnrh3mlptht5psyy.appsync-api.us-east-1.amazonaws.com/graphql",
+    "aws_region": "us-east-1",
+    "api_key": "da2-5b6tm64wpzg3novbxtoemjkvhm",
+    "default_authorization_type": "AMAZON_COGNITO_USER_POOLS",
+    "authorization_types": [
+      "API_KEY",
+      "AWS_IAM"
+    ],
+    "model_introspection": {
+      "version": 1,
+      "models": {
+        "ChatSession": {
+          "name": "ChatSession",
+          "fields": {
+            "id": {
+              "name": "id",
+              "isArray": false,
+              "type": "ID",
+              "isRequired": true,
+              "attributes": []
+            },
+            "messages": {
+              "name": "messages",
+              "isArray": true,
+              "type": {
+                "model": "ChatMessage"
+              },
+              "isRequired": false,
+              "attributes": [],
+              "isArrayNullable": true,
+              "association": {
+                "connectionType": "HAS_MANY",
+                "associatedWith": [
+                  "chatSessionId"
+                ]
+              }
+            },
+            "firstMessageSummary": {
+              "name": "firstMessageSummary",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "aiBotInfo": {
+              "name": "aiBotInfo",
+              "isArray": false,
+              "type": {
+                "nonModel": "ChatSessionAiBotInfo"
+              },
+              "isRequired": false,
+              "attributes": []
+            },
+            "planGoal": {
+              "name": "planGoal",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "planSteps": {
+              "name": "planSteps",
+              "isArray": true,
+              "type": "String",
+              "isRequired": false,
+              "attributes": [],
+              "isArrayNullable": true
+            },
+            "pastSteps": {
+              "name": "pastSteps",
+              "isArray": true,
+              "type": "String",
+              "isRequired": false,
+              "attributes": [],
+              "isArrayNullable": true
+            },
+            "createdAt": {
+              "name": "createdAt",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": [],
+              "isReadOnly": true
+            },
+            "updatedAt": {
+              "name": "updatedAt",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": [],
+              "isReadOnly": true
+            }
+          },
+          "syncable": true,
+          "pluralName": "ChatSessions",
+          "attributes": [
+            {
+              "type": "model",
+              "properties": {}
+            },
+            {
+              "type": "auth",
+              "properties": {
+                "rules": [
+                  {
+                    "provider": "userPools",
+                    "ownerField": "owner",
+                    "allow": "owner",
+                    "identityClaim": "cognito:username",
+                    "operations": [
+                      "create",
+                      "update",
+                      "delete",
+                      "read"
+                    ]
+                  },
+                  {
+                    "allow": "private",
+                    "operations": [
+                      "read"
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "primaryKeyInfo": {
+            "isCustomPrimaryKey": false,
+            "primaryKeyFieldName": "id",
+            "sortKeyFieldNames": []
+          }
+        },
+        "ChatMessage": {
+          "name": "ChatMessage",
+          "fields": {
+            "id": {
+              "name": "id",
+              "isArray": false,
+              "type": "ID",
+              "isRequired": true,
+              "attributes": []
+            },
+            "chatSessionId": {
+              "name": "chatSessionId",
+              "isArray": false,
+              "type": "ID",
+              "isRequired": false,
+              "attributes": []
+            },
+            "session": {
+              "name": "session",
+              "isArray": false,
+              "type": {
+                "model": "ChatSession"
+              },
+              "isRequired": false,
+              "attributes": [],
+              "association": {
+                "connectionType": "BELONGS_TO",
+                "targetNames": [
+                  "chatSessionId"
+                ]
+              }
+            },
+            "content": {
+              "name": "content",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true,
+              "attributes": []
+            },
+            "trace": {
+              "name": "trace",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "role": {
+              "name": "role",
+              "isArray": false,
+              "type": {
+                "enum": "ChatMessageRole"
+              },
+              "isRequired": false,
+              "attributes": []
+            },
+            "chatSessionIdDashFieldName": {
+              "name": "chatSessionIdDashFieldName",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "chainOfThought": {
+              "name": "chainOfThought",
+              "isArray": false,
+              "type": "Boolean",
+              "isRequired": false,
+              "attributes": []
+            },
+            "owner": {
+              "name": "owner",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "createdAt": {
+              "name": "createdAt",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": []
+            },
+            "tool_call_id": {
+              "name": "tool_call_id",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "tool_name": {
+              "name": "tool_name",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "tool_calls": {
+              "name": "tool_calls",
+              "isArray": false,
+              "type": "AWSJSON",
+              "isRequired": false,
+              "attributes": []
+            },
+            "responseComplete": {
+              "name": "responseComplete",
+              "isArray": false,
+              "type": "Boolean",
+              "isRequired": false,
+              "attributes": []
+            },
+            "updatedAt": {
+              "name": "updatedAt",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": [],
+              "isReadOnly": true
+            }
+          },
+          "syncable": true,
+          "pluralName": "ChatMessages",
+          "attributes": [
+            {
+              "type": "model",
+              "properties": {}
+            },
+            {
+              "type": "key",
+              "properties": {
+                "name": "chatMessagesByChatSessionIdAndCreatedAt",
+                "queryField": "listChatMessageByChatSessionIdAndCreatedAt",
+                "fields": [
+                  "chatSessionId",
+                  "createdAt"
+                ]
+              }
+            },
+            {
+              "type": "key",
+              "properties": {
+                "name": "chatMessagesByChatSessionIdDashFieldNameAndCreatedAt",
+                "queryField": "listChatMessageByChatSessionIdDashFieldNameAndCreatedAt",
+                "fields": [
+                  "chatSessionIdDashFieldName",
+                  "createdAt"
+                ]
+              }
+            },
+            {
+              "type": "auth",
+              "properties": {
+                "rules": [
+                  {
+                    "provider": "userPools",
+                    "ownerField": "owner",
+                    "allow": "owner",
+                    "identityClaim": "cognito:username",
+                    "operations": [
+                      "create",
+                      "update",
+                      "delete",
+                      "read"
+                    ]
+                  },
+                  {
+                    "allow": "private",
+                    "operations": [
+                      "create",
+                      "update",
+                      "delete",
+                      "read"
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "primaryKeyInfo": {
+            "isCustomPrimaryKey": false,
+            "primaryKeyFieldName": "id",
+            "sortKeyFieldNames": []
+          }
+        },
+        "WorkOrder": {
+          "name": "WorkOrder",
+          "fields": {
+            "id": {
+              "name": "id",
+              "isArray": false,
+              "type": "ID",
+              "isRequired": true,
+              "attributes": []
+            },
+            "work_order_id": {
+              "name": "work_order_id",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true,
+              "attributes": []
+            },
+            "asset_id": {
+              "name": "asset_id",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true,
+              "attributes": []
+            },
+            "description": {
+              "name": "description",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "location_name": {
+              "name": "location_name",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "owner_name": {
+              "name": "owner_name",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "priority": {
+              "name": "priority",
+              "isArray": false,
+              "type": "Int",
+              "isRequired": false,
+              "attributes": []
+            },
+            "safetyCheckPerformedAt": {
+              "name": "safetyCheckPerformedAt",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": []
+            },
+            "safetycheckresponse": {
+              "name": "safetycheckresponse",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "scheduled_finish_timestamp": {
+              "name": "scheduled_finish_timestamp",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": []
+            },
+            "scheduled_start_timestamp": {
+              "name": "scheduled_start_timestamp",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": []
+            },
+            "status": {
+              "name": "status",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "locationDetails": {
+              "name": "locationDetails",
+              "isArray": false,
+              "type": {
+                "nonModel": "WorkOrderLocationDetails"
+              },
+              "isRequired": false,
+              "attributes": []
+            },
+            "createdAt": {
+              "name": "createdAt",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": [],
+              "isReadOnly": true
+            },
+            "updatedAt": {
+              "name": "updatedAt",
+              "isArray": false,
+              "type": "AWSDateTime",
+              "isRequired": false,
+              "attributes": [],
+              "isReadOnly": true
+            }
+          },
+          "syncable": true,
+          "pluralName": "WorkOrders",
+          "attributes": [
+            {
+              "type": "model",
+              "properties": {}
+            },
+            {
+              "type": "key",
+              "properties": {
+                "name": "workOrdersByWork_order_id",
+                "queryField": "listWorkOrderByWork_order_id",
+                "fields": [
+                  "work_order_id"
+                ]
+              }
+            },
+            {
+              "type": "key",
+              "properties": {
+                "name": "workOrdersByPriorityAndScheduled_start_timestamp",
+                "queryField": "listWorkOrderByPriorityAndScheduled_start_timestamp",
+                "fields": [
+                  "priority",
+                  "scheduled_start_timestamp"
+                ]
+              }
+            },
+            {
+              "type": "auth",
+              "properties": {
+                "rules": [
+                  {
+                    "provider": "userPools",
+                    "ownerField": "owner",
+                    "allow": "owner",
+                    "identityClaim": "cognito:username",
+                    "operations": [
+                      "create",
+                      "update",
+                      "delete",
+                      "read"
+                    ]
+                  },
+                  {
+                    "allow": "private",
+                    "operations": [
+                      "create",
+                      "update",
+                      "delete",
+                      "read"
+                    ]
+                  }
+                ]
+              }
+            }
+          ],
+          "primaryKeyInfo": {
+            "isCustomPrimaryKey": false,
+            "primaryKeyFieldName": "id",
+            "sortKeyFieldNames": []
+          }
+        }
+      },
+      "enums": {
+        "ChatMessageRole": {
+          "name": "ChatMessageRole",
+          "values": [
+            "human",
+            "ai",
+            "tool"
+          ]
+        }
+      },
+      "nonModels": {
+        "BedrockResponse": {
+          "name": "BedrockResponse",
+          "fields": {
+            "body": {
+              "name": "body",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "error": {
+              "name": "error",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            }
+          }
+        },
+        "BedrockAgentResponse": {
+          "name": "BedrockAgentResponse",
+          "fields": {
+            "completion": {
+              "name": "completion",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "orchestrationTrace": {
+              "name": "orchestrationTrace",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            }
+          }
+        },
+        "ResponseStreamChunk": {
+          "name": "ResponseStreamChunk",
+          "fields": {
+            "chunk": {
+              "name": "chunk",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true,
+              "attributes": []
+            },
+            "index": {
+              "name": "index",
+              "isArray": false,
+              "type": "Int",
+              "isRequired": false,
+              "attributes": []
+            },
+            "chatSessionId": {
+              "name": "chatSessionId",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true,
+              "attributes": []
+            }
+          }
+        },
+        "ChatSessionAiBotInfo": {
+          "name": "ChatSessionAiBotInfo",
+          "fields": {
+            "aiBotName": {
+              "name": "aiBotName",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "aiBotId": {
+              "name": "aiBotId",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "aiBotAliasId": {
+              "name": "aiBotAliasId",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "aiBotVersion": {
+              "name": "aiBotVersion",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            }
+          }
+        },
+        "WorkOrderLocationDetails": {
+          "name": "WorkOrderLocationDetails",
+          "fields": {
+            "location_name": {
+              "name": "location_name",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "address": {
+              "name": "address",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "description": {
+              "name": "description",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "latitude": {
+              "name": "latitude",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            },
+            "longitude": {
+              "name": "longitude",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false,
+              "attributes": []
+            }
+          }
+        }
+      },
+      "queries": {
+        "invokeBedrock": {
+          "name": "invokeBedrock",
+          "isArray": false,
+          "type": {
+            "nonModel": "BedrockResponse"
+          },
+          "isRequired": false,
+          "arguments": {
+            "prompt": {
+              "name": "prompt",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false
+            }
+          }
+        },
+        "listBedrockAgents": {
+          "name": "listBedrockAgents",
+          "isArray": false,
+          "type": {
+            "nonModel": "BedrockResponse"
+          },
+          "isRequired": false
+        },
+        "listBedrockAgentAliasIds": {
+          "name": "listBedrockAgentAliasIds",
+          "isArray": false,
+          "type": {
+            "nonModel": "BedrockResponse"
+          },
+          "isRequired": false,
+          "arguments": {
+            "agentId": {
+              "name": "agentId",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false
+            }
+          }
+        },
+        "invokeBedrockAgent": {
+          "name": "invokeBedrockAgent",
+          "isArray": false,
+          "type": {
+            "nonModel": "BedrockAgentResponse"
+          },
+          "isRequired": false,
+          "arguments": {
+            "prompt": {
+              "name": "prompt",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true
+            },
+            "agentId": {
+              "name": "agentId",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true
+            },
+            "agentAliasId": {
+              "name": "agentAliasId",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true
+            },
+            "chatSessionId": {
+              "name": "chatSessionId",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true
+            }
+          }
+        },
+        "invokeBedrockWithStructuredOutput": {
+          "name": "invokeBedrockWithStructuredOutput",
+          "isArray": false,
+          "type": "String",
+          "isRequired": false,
+          "arguments": {
+            "lastMessageText": {
+              "name": "lastMessageText",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true
+            },
+            "usePastMessages": {
+              "name": "usePastMessages",
+              "isArray": false,
+              "type": "Boolean",
+              "isRequired": false
+            },
+            "outputStructure": {
+              "name": "outputStructure",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true
+            },
+            "chatSessionId": {
+              "name": "chatSessionId",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true
+            }
+          }
+        },
+        "invokeProductionAgent": {
+          "name": "invokeProductionAgent",
+          "isArray": false,
+          "type": "AWSJSON",
+          "isRequired": false,
+          "arguments": {
+            "lastMessageText": {
+              "name": "lastMessageText",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true
+            },
+            "chatSessionId": {
+              "name": "chatSessionId",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false
+            },
+            "usePreviousMessageContext": {
+              "name": "usePreviousMessageContext",
+              "isArray": false,
+              "type": "Boolean",
+              "isRequired": false
+            },
+            "messageOwnerIdentity": {
+              "name": "messageOwnerIdentity",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false
+            },
+            "doNotSendResponseComplete": {
+              "name": "doNotSendResponseComplete",
+              "isArray": false,
+              "type": "Boolean",
+              "isRequired": false
+            }
+          }
+        },
+        "invokePlanAndExecuteAgent": {
+          "name": "invokePlanAndExecuteAgent",
+          "isArray": false,
+          "type": "AWSJSON",
+          "isRequired": false,
+          "arguments": {
+            "lastMessageText": {
+              "name": "lastMessageText",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true
+            },
+            "chatSessionId": {
+              "name": "chatSessionId",
+              "isArray": false,
+              "type": "String",
+              "isRequired": false
+            }
+          }
+        },
+        "fetchWorkOrders": {
+          "name": "fetchWorkOrders",
+          "isArray": true,
+          "type": {
+            "model": "WorkOrder"
+          },
+          "isRequired": false,
+          "isArrayNullable": true
+        }
+      },
+      "mutations": {
+        "publishResponseStreamChunk": {
+          "name": "publishResponseStreamChunk",
+          "isArray": false,
+          "type": {
+            "nonModel": "ResponseStreamChunk"
+          },
+          "isRequired": false,
+          "arguments": {
+            "chunk": {
+              "name": "chunk",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true
+            },
+            "index": {
+              "name": "index",
+              "isArray": false,
+              "type": "Int",
+              "isRequired": false
+            },
+            "chatSessionId": {
+              "name": "chatSessionId",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true
+            }
+          }
+        }
+      },
+      "subscriptions": {
+        "recieveResponseStreamChunk": {
+          "name": "recieveResponseStreamChunk",
+          "isArray": false,
+          "type": {
+            "nonModel": "ResponseStreamChunk"
+          },
+          "isRequired": false,
+          "arguments": {
+            "chatSessionId": {
+              "name": "chatSessionId",
+              "isArray": false,
+              "type": "String",
+              "isRequired": true
+            }
+          }
+        }
+      }
+    }
+  },
+  "storage": {
+    "aws_region": "us-east-1",
+    "bucket_name": "amplify-d3imgoozjx69do-gra-filedrivebucket01be03e1-lwablq2ljc3u",
+    "buckets": [
+      {
+        "name": "fileDrive",
+        "bucket_name": "amplify-d3imgoozjx69do-gra-filedrivebucket01be03e1-lwablq2ljc3u",
+        "aws_region": "us-east-1",
+        "paths": {
+          "production-agent/*": {
+            "authenticated": [
+              "get",
+              "list",
+              "write",
+              "delete"
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "version": "1.3",
+  "custom": {
+    "api_id": "wr2mzv3oufa6nduikk34iyelqu",
+    "root_stack_name": "amplify-d3imgoozjx69do-graphql-branch-1136b516a7",
+    "maintenanceAgentId": "DGYISNR1L7",
+    "maintenanceAgentAliasId": "GBOTQXRIAN"
+  }
+}

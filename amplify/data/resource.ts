@@ -239,10 +239,6 @@ WorkOrder: a.model({
     }),
   })
   .identifier(['work_order_id'])
-  .secondaryIndexes((index) => [
-    index("priority").sortKeys(["scheduled_start_timestamp"]),
-    index("work_order_id"),
-  ])
   .authorization((allow) => [allow.owner(), allow.authenticated()]),
     
   fetchWorkOrders: a
