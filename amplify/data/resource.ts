@@ -219,16 +219,16 @@ const schema = a.schema({
 
 
   WorkOrder: a.model({
-    workOrderId: a.string().required(),
-    assetId: a.string().required(),
+    work_order_id: a.string().required(),
+    asset_id: a.string().required(),
     description: a.string(),
-    locationName: a.string(),
-    ownerName: a.string(),
+    location_name: a.string(),
+    owner_name: a.string(),
     priority: a.integer(),
     safetyCheckPerformedAt: a.datetime(),
-    safetyCheckResponse: a.string(),
-    scheduledStartTimestamp: a.datetime(),
-    scheduledFinishTimestamp: a.datetime(),
+    safetycheckresponse: a.string(),
+    scheduled_finish_timestamp: a.datetime(),
+    scheduled_start_timestamp: a.datetime(),
     status: a.string(),
     locationDetails: a.customType({
       locationName: a.string(),
@@ -239,8 +239,8 @@ const schema = a.schema({
     }),
    })
   .secondaryIndexes((index) => [
-    index("priority").sortKeys(["scheduledStartTimestamp"]),
-    index("workOrderId"),
+    index("priority").sortKeys(["scheduled_start_timestamp"]),
+    index("work_order_id"),
   ])
   .authorization((allow) => [allow.owner(), allow.authenticated()]),
     

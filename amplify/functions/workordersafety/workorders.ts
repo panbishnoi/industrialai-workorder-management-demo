@@ -33,6 +33,9 @@ export const handler = async () => {
     const sortedWorkOrders = workOrders.sort((a:any, b:any) => 
       (a.work_order_id > b.work_order_id ? 1 : -1)
     );
+    
+    console.log('The sorted workorders are:', sortedWorkOrders);
+
 
     return sortedWorkOrders; // Return the sorted list of work orders
   } catch (error) {
