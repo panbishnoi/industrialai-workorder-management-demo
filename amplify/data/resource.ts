@@ -237,14 +237,17 @@ const schema = a.schema({
       latitude: a.string(),
       longitude: a.string(),
     }),
-   })
+   }).queries({
+    get: false,
+    list: false
+  })
   .secondaryIndexes((index) => [
     index("priority").sortKeys(["scheduled_start_timestamp"]),
     index("work_order_id"),
   ])
   .authorization((allow) => [allow.owner(), allow.authenticated()]),
     
-  fetchWorkOrders: a
+  listWorkOrders: a
     .query()
     .returns(a.ref("WorkOrder").array())
     .authorization((allow) => allow.authenticated())
