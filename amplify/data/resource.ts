@@ -230,7 +230,7 @@ WorkOrder: a.model({
     scheduled_finish_timestamp: a.string(),
     scheduled_start_timestamp: a.string(),
     status: a.string(),
-    locationDetails: a.customType({
+    location_details: a.customType({
       location_name: a.string(),
       address: a.string(),
       description: a.string(),

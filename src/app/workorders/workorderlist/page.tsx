@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { amplifyClient } from "@/utils/amplify-utils"; // Ensure this is correctly configured
 import { Container, Header, Table } from "@cloudscape-design/components";
 import "@aws-amplify/ui-react/styles.css";
-
+import { GraphQLResult } from "@aws-amplify/api-graphql";
 interface LocationDetails {
     location_name?: string;
     address?: string;
@@ -26,8 +26,11 @@ interface LocationDetails {
     scheduled_finish_timestamp?: string;
     scheduled_start_timestamp?: string;
     status?: string;
-    locationDetails?: LocationDetails; // Nested object
+    location_details?: LocationDetails; // Nested object
 }
+
+
+        
 
 const WorkOrdersPage = () => {
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
@@ -39,9 +42,35 @@ const WorkOrdersPage = () => {
     const fetchWorkOrders = async () => {
       try {
         setLoading(true);
-        const response = await amplifyClient.queries.fetchWorkOrders(); // Replace with your actual query
-        if (response.data) {
-            setWorkOrders(response.data as WorkOrder[]); // Cast response.data to WorkOrder[]
+        // Define the GraphQL query with only required fields
+        const query = `
+          query FetchWorkOrders {
+            fetchWorkOrders {
+              work_order_id
+              asset_id
+              description
+              location_name
+              owner_name
+              priority
+              safetyCheckPerformedAt
+              safetycheckresponse
+              scheduled_finish_timestamp
+              scheduled_start_timestamp
+              status
+              location_details {
+                location_name  
+                address
+                description
+                latitude
+                longitude
+              }
+            }
+          }
+        `;
+        const response = (await amplifyClient.graphql({ query })) as GraphQLResult<{ fetchWorkOrders: WorkOrder[] }>;
+
+        if (response?.data && response.data?.fetchWorkOrders) {
+            setWorkOrders(response.data.fetchWorkOrders as WorkOrder[]); // Cast response.data to WorkOrder[]
           }
       } catch (err) {
         console.error("Error fetching work orders:", err);
