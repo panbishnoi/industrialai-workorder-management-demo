@@ -219,6 +219,7 @@ const schema = a.schema({
 
 
 WorkOrder: a.model({
+    id: a.string().optional() ,
     work_order_id: a.string().required(),
     asset_id: a.string().required(),
     description: a.string(),
