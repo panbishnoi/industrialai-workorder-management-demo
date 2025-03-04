@@ -219,7 +219,6 @@ const schema = a.schema({
 
 
 WorkOrder: a.model({
-    id: a.string() ,
     work_order_id: a.string().required(),
     asset_id: a.string().required(),
     description: a.string(),
@@ -239,6 +238,7 @@ WorkOrder: a.model({
       longitude: a.string(),
     }),
   })
+  .identifier(['work_order_id'])
   .secondaryIndexes((index) => [
     index("priority").sortKeys(["scheduled_start_timestamp"]),
     index("work_order_id"),
