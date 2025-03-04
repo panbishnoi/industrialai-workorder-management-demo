@@ -218,7 +218,7 @@ const schema = a.schema({
     .authorization(allow => [allow.authenticated()]),
 
 
-  WorkOrder: a.model({
+WorkOrder: a.model({
     work_order_id: a.string().required(),
     asset_id: a.string().required(),
     description: a.string(),
@@ -237,10 +237,12 @@ const schema = a.schema({
       latitude: a.string(),
       longitude: a.string(),
     }),
-   }).queries({
-    get: false,
-    list: false
-  })
+  }, {
+    queries: {
+        get: false,
+        list: false
+    }
+})
   .secondaryIndexes((index) => [
     index("priority").sortKeys(["scheduled_start_timestamp"]),
     index("work_order_id"),
