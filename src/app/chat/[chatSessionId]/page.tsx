@@ -512,6 +512,18 @@ function Page({ params }: { params?: { chatSessionId: string } }) {
                     // console.log("MaintenanceAgentResponse: ", response)
                     // addChatMessage({ body: response!.text!, role: "ai" })
                     break
+                case defaultAgents.WorkOrderSafety.name:
+
+                    await invokeBedrockAgentParseBodyGetTextAndTrace({
+                        prompt: prompt,
+
+                        chatSession: initialActiveChatSession,
+                        agentAliasId: (defaultAgents.WorkOrderSafety as BedrockAgent).agentAliasId,
+                        agentId: (defaultAgents.WorkOrderSafety as BedrockAgent).agentId,
+                    })
+                    // console.log("MaintenanceAgentResponse: ", response)
+                    // addChatMessage({ body: response!.text!, role: "ai" })
+                    break                    
                 case defaultAgents.ProductionAgent.name:
                     await addChatMessage({ body: prompt, role: "human", chainOfThought: true })
                     await invokeProductionAgent(prompt, initialActiveChatSession)
