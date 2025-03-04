@@ -231,7 +231,7 @@ const schema = a.schema({
     scheduled_start_timestamp: a.datetime(),
     status: a.string(),
     locationDetails: a.customType({
-      locationName: a.string(),
+      location_name: a.string(),
       address: a.string(),
       description: a.string(),
       latitude: a.string(),
