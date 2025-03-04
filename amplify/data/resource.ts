@@ -242,10 +242,9 @@ const schema = a.schema({
     index("priority").sortKeys(["scheduledStartTimestamp"]),
     index("workOrderId"),
   ])
-  .authorization((allow) => [allow.owner(), allow.authenticated()])
-  .queries({ get: "getWorkOrder", list: null }),
+  .authorization((allow) => [allow.owner(), allow.authenticated()]),
     
-  listWorkOrders: a
+  fetchWorkOrders: a
     .query()
     .returns(a.ref("WorkOrder").array())
     .authorization((allow) => allow.authenticated())
