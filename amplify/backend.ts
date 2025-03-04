@@ -8,7 +8,7 @@ import {
   invokeBedrockAgentFunction,
   getStructuredOutputFromLangchainFunction,
   productionAgentFunction,
-  planAndExecuteAgentFunction,
+  planAndExecuteAgentFunction,workorderfunction
   // addIamDirectiveFunction
 } from './data/resource';
 import { preSignUp } from './functions/preSignUp/resource';
@@ -51,7 +51,7 @@ const backend = defineBackend({
   getStructuredOutputFromLangchainFunction,
   productionAgentFunction,
   planAndExecuteAgentFunction,
-  preSignUp
+  preSignUp, workorderfunction
 });
 
 const bedrockRuntimeDataSource = backend.data.resources.graphqlApi.addHttpDataSource(
@@ -107,6 +107,22 @@ backend.invokeBedrockAgentFunction.resources.lambda.addToRolePolicy(
   }
   )
 )
+
+backend.workorderfunction.resources.lambda.addToRolePolicy(
+  new iam.PolicyStatement({
+    resources: [
+      `*`
+    ],
+    actions: [
+      "dynamodb:GetItem",
+      "dynamodb:Scan",
+      "dynamodb:Query",
+      "dynamodb:PutItem",
+      "dynamodb:UpdateItem",
+      "dynamodb:DeleteItem"
+    ],
+  })
+);
 
 //This may be unneccessary TODO figur out if this is required.
 backend.invokeBedrockAgentFunction.resources.lambda.addToRolePolicy(

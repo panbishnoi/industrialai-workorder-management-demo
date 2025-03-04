@@ -50,6 +50,17 @@ export const planAndExecuteAgentFunction = defineFunction({
   runtime: 20
 });
 
+
+export const workOrderFunction = defineFunction({
+  name: "workorder-function",
+  entry: '../functions/workordersafety/workorders.ts',
+  timeoutSeconds: 900,
+  environment: {
+    WorkOrderTableName: 'fieldworkforce-safety-app-work-orders',
+    LocationTableName: 'fieldworkforce-safety-app-locations',
+  },
+  runtime: 20
+});
 // export const addIamDirectiveFunction = defineFunction({
 //   name: "add-iam-directive-function",
 //   entry: '../functions/addIamDirectiveToAllAssets.ts',
@@ -206,6 +217,44 @@ const schema = a.schema({
     .handler(a.handler.custom({ entry: './receiveMessageStreamChunk.js' }))
     .authorization(allow => [allow.authenticated()]),
 
+  WorkOrder: a.model({
+    workOrderId: a.string().required(),
+    assetId: a.string().required(),
+    description: a.string(),
+    locationName: a.string(),
+    ownerName: a.string(),
+    priority: a.integer(),
+    safetyCheckPerformedAt: a.datetime(),
+    safetyCheckResponse: a.string(),
+    scheduledStartTimestamp: a.datetime(),
+    scheduledFinishTimestamp: a.datetime(),
+    status: a.string(),
+    locationDetails: a.customType({
+      locationName: a.string(),
+      address: a.string(),
+      description: a.string(),
+      latitude: a.string(), // Stored as string for simplicity
+      longitude: a.string(), // Stored as string for simplicity
+    }),
+  })
+    .secondaryIndexes((index) => [
+      index("priority").sortKeys(["scheduledStartTimestamp"]),
+      index("workOrderId"),
+    ])
+    .authorization((allow) => [allow.owner(), allow.authenticated()]),
+  
+  
+  listWorkOrders: a
+    .query()
+    .returns(a.ref("WorkOrder").array())
+    .authorization((allow) => allow.authenticated())
+    .handler(
+      a.handler.function({
+        workOrderFunction
+      })
+    )
+
+    
 }).authorization(allow => [
   allow.resource(getStructuredOutputFromLangchainFunction),
   allow.resource(productionAgentFunction),
