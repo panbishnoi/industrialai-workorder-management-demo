@@ -225,10 +225,10 @@ WorkOrder: a.model({
     location_name: a.string(),
     owner_name: a.string(),
     priority: a.integer(),
-    safetyCheckPerformedAt: a.datetime(),
+    safetyCheckPerformedAt: a.string(),
     safetycheckresponse: a.string(),
-    scheduled_finish_timestamp: a.datetime(),
-    scheduled_start_timestamp: a.datetime(),
+    scheduled_finish_timestamp: a.string(),
+    scheduled_start_timestamp: a.string(),
     status: a.string(),
     locationDetails: a.customType({
       location_name: a.string(),

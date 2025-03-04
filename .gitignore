@@ -1,5 +1,8 @@
 # Dependencies
 node_modules
+# Ignore Next.js build output
+.next/
+
 **/node_modules
 cdk/.venv
 **/__pycache__
