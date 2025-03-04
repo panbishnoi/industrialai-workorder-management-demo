@@ -67,7 +67,7 @@ export default function Home() {
                   <Button variant="primary" href='/chat'>
                     Start a Chat
                   </Button>
-                  <Button variant="primary" href='/workorder'>
+                  <Button variant="primary" href='/workorders'>
                     Workorder Safety Agent
                   </Button>
                   <Button>

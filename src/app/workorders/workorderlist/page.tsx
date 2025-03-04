@@ -6,18 +6,27 @@ import { amplifyClient } from "@/utils/amplify-utils"; // Ensure this is correct
 import { Container, Header, Table } from "@cloudscape-design/components";
 import "@aws-amplify/ui-react/styles.css";
 
-interface WorkOrder {
-  id: string;
-  work_order_id: string;
-  asset_id: string;
-  description: string;
-  location_name: string;
-  owner_name: string;
-  priority: number;
-  safetyCheckPerformedAt: string;
-  scheduled_start_timestamp: string;
-  scheduled_finish_timestamp: string;
-  status: string;
+interface LocationDetails {
+    location_name?: string;
+    address?: string;
+    description?: string;
+    latitude?: string;
+    longitude?: string;
+  }
+  
+  interface WorkOrder {
+    work_order_id: string;
+    asset_id: string;
+    description?: string;
+    location_name?: string;
+    owner_name?: string;
+    priority?: number;
+    safetyCheckPerformedAt?: string;
+    safetycheckresponse?: string;
+    scheduled_finish_timestamp?: string;
+    scheduled_start_timestamp?: string;
+    status?: string;
+    locationDetails?: LocationDetails; // Nested object
 }
 
 const WorkOrdersPage = () => {
@@ -31,7 +40,9 @@ const WorkOrdersPage = () => {
       try {
         setLoading(true);
         const response = await amplifyClient.queries.fetchWorkOrders(); // Replace with your actual query
-        setWorkOrders(response.data.fetchWorkOrders || []);
+        if (response.data) {
+            setWorkOrders(response.data as WorkOrder[]); // Cast response.data to WorkOrder[]
+          }
       } catch (err) {
         console.error("Error fetching work orders:", err);
         setError("Failed to load work orders.");
@@ -59,7 +70,7 @@ const WorkOrdersPage = () => {
             { id: "description", header: "Description", cell: (item) => item.description },
             { id: "location_name", header: "Location", cell: (item) => item.location_name },
             { id: "owner_name", header: "Owner", cell: (item) => item.owner_name },
-            { id: "priority", header: "Priority", cell: (item) => item.priority.toString() },
+            { id: "priority", header: "Priority", cell: (item) => item.priority },
             { id: "status", header: "Status", cell: (item) => item.status },
           ]}
           items={workOrders}
