@@ -217,6 +217,7 @@ const schema = a.schema({
     .handler(a.handler.custom({ entry: './receiveMessageStreamChunk.js' }))
     .authorization(allow => [allow.authenticated()]),
 
+
   WorkOrder: a.model({
     workOrderId: a.string().required(),
     assetId: a.string().required(),
@@ -233,17 +234,17 @@ const schema = a.schema({
       locationName: a.string(),
       address: a.string(),
       description: a.string(),
-      latitude: a.string(), // Stored as string for simplicity
-      longitude: a.string(), // Stored as string for simplicity
+      latitude: a.string(),
+      longitude: a.string(),
     }),
-  })
-    .secondaryIndexes((index) => [
-      index("priority").sortKeys(["scheduledStartTimestamp"]),
-      index("workOrderId"),
-    ])
-    .authorization((allow) => [allow.owner(), allow.authenticated()]),
-  
-  
+   })
+  .secondaryIndexes((index) => [
+    index("priority").sortKeys(["scheduledStartTimestamp"]),
+    index("workOrderId"),
+  ])
+  .authorization((allow) => [allow.owner(), allow.authenticated()])
+  .queries({ get: "getWorkOrder", list: null }),
+    
   listWorkOrders: a
     .query()
     .returns(a.ref("WorkOrder").array())
@@ -251,6 +252,7 @@ const schema = a.schema({
     .handler(
       a.handler.function(workOrderFunction)
     )
+    
 
 
     
