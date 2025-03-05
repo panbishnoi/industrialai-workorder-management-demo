@@ -21,7 +21,6 @@
     "leaflet": "^1.9.4",
     "react-leaflet": "^4.2.1",
     "@types/leaflet": "^1.9.8" ,
-    "react-leaflet-heatmap-layer-v3": "^3.0.3-beta-1",
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@langchain/aws": "^0.1.1",

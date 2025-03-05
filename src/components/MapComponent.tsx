@@ -1,6 +1,5 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, Popup, Circle, Polygon } from 'react-leaflet';
 import L, {LatLngTuple} from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { UnifiedMapProps } from '@/types/emergency';
@@ -9,7 +8,7 @@ import { UnifiedMapProps } from '@/types/emergency';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-
+import dynamic from 'next/dynamic';
 // Set up default icon
 const defaultIcon = L.icon({
   iconUrl: markerIcon.src,
@@ -24,10 +23,23 @@ const defaultIcon = L.icon({
 // Set the default icon for all markers
 L.Marker.prototype.options.icon = defaultIcon;
 
+
+
+// Dynamically import React-Leaflet components
+const MapContainer = dynamic(() => import('react-leaflet').then((mod) => mod.MapContainer), { ssr: false });
+const TileLayer = dynamic(() => import('react-leaflet').then((mod) => mod.TileLayer), { ssr: false });
+const Marker = dynamic(() => import('react-leaflet').then((mod) => mod.Marker), { ssr: false });
+const Popup = dynamic(() => import('react-leaflet').then((mod) => mod.Popup), { ssr: false });
+const Circle = dynamic(() => import('react-leaflet').then((mod) => mod.Circle), { ssr: false });
+const Polygon = dynamic(() => import('react-leaflet').then((mod) => mod.Polygon), { ssr: false });
+
 const MapComponent = ({ centerPoint, description, emergencies }: UnifiedMapProps) => {
     return (
         <MapContainer center={[centerPoint[1], centerPoint[0]]} zoom={13} style={{ height: '500px', width: '100%' }}>
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+<TileLayer
+  url="https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token=YOUR_MAPBOX_ACCESS_TOKEN"
+  attribution='&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a>, &copy; OpenStreetMap contributors'
+/>
     
           {/* Work Order Location */}
           <Marker position={[centerPoint[1], centerPoint[0]]}>
