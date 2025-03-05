@@ -1,14 +1,19 @@
 "use client";
-
-import L, {LatLngTuple} from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import { UnifiedMapProps } from '@/types/emergency';
+// IMPORTANT: the order matters!
+import "leaflet/dist/leaflet.css";
+import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.webpack.css";
+import "leaflet-defaulticon-compatibility";
+import { MapContainer, TileLayer, Marker, Circle, Popup, Polygon} from 'react-leaflet';
+import { useMap } from 'react-leaflet';
 
 // Fix Leaflet marker icon issues
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-import dynamic from 'next/dynamic';
+
+import { UnifiedMapProps } from '@/types/emergency';
+import { useEffect } from 'react';
+import L, {LatLngTuple} from 'leaflet';
 // Set up default icon
 const defaultIcon = L.icon({
   iconUrl: markerIcon.src,
@@ -23,23 +28,25 @@ const defaultIcon = L.icon({
 // Set the default icon for all markers
 L.Marker.prototype.options.icon = defaultIcon;
 
-
-
-// Dynamically import React-Leaflet components
-const MapContainer = dynamic(() => import('react-leaflet').then((mod) => mod.MapContainer), { ssr: false });
-const TileLayer = dynamic(() => import('react-leaflet').then((mod) => mod.TileLayer), { ssr: false });
-const Marker = dynamic(() => import('react-leaflet').then((mod) => mod.Marker), { ssr: false });
-const Popup = dynamic(() => import('react-leaflet').then((mod) => mod.Popup), { ssr: false });
-const Circle = dynamic(() => import('react-leaflet').then((mod) => mod.Circle), { ssr: false });
-const Polygon = dynamic(() => import('react-leaflet').then((mod) => mod.Polygon), { ssr: false });
-
+function MapResizer() {
+    const map = useMap();
+    
+    useEffect(() => {
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 100);
+    }, [map]);
+  
+    return null;
+  }
 const MapComponent = ({ centerPoint, description, emergencies }: UnifiedMapProps) => {
     return (
         <MapContainer center={[centerPoint[1], centerPoint[0]]} zoom={13} style={{ height: '500px', width: '100%' }}>
-<TileLayer
-  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-/>
+  <MapResizer />
+    <TileLayer
+    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    />
     
           {/* Work Order Location */}
           <Marker position={[centerPoint[1], centerPoint[0]]}>
