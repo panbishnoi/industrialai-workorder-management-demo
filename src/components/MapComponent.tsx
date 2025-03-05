@@ -37,8 +37,8 @@ const MapComponent = ({ centerPoint, description, emergencies }: UnifiedMapProps
     return (
         <MapContainer center={[centerPoint[1], centerPoint[0]]} zoom={13} style={{ height: '500px', width: '100%' }}>
 <TileLayer
-  url="https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token=YOUR_MAPBOX_ACCESS_TOKEN"
-  attribution='&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a>, &copy; OpenStreetMap contributors'
+  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 />
     
           {/* Work Order Location */}
