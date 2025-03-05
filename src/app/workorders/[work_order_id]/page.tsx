@@ -162,8 +162,8 @@ const WorkOrderDetails = () => {
             {workOrder.location_details?.latitude && workOrder.location_details?.longitude ? (
               <UnifiedMap 
               centerPoint={[
-                lat,
                 lng,
+                lat,
               ]}
               description={workOrder.location_name} 
               emergencies={emergencies}
