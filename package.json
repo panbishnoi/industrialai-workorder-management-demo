@@ -50,8 +50,10 @@
     "remark-gfm": "^4.0.0",
     "sass": "^1.79.4",
     "sharp": "^0.33.5",
-    "yaml": "^2.7.0",
-    "@parcel/watcher": "^2.4.1"
+    "yaml": "^2.7.0"
+  },
+  "optionalDependencies": {
+    "@parcel/watcher-linux-x64-glibc": "2.4.1"
   },
   "devDependencies": {
     "@aws-amplify/backend": "^1.13.0",
