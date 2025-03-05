@@ -2,12 +2,12 @@
 node_modules
 # Ignore Next.js build output
 .next/
-
 **/node_modules
 cdk/.venv
 **/__pycache__
 *.pyc
-
+next-env.d.ts
+amplify-outputs.json
 # Build outputs
 **/dist
 **/build
