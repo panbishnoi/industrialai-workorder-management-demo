@@ -68,7 +68,7 @@ export default function Home() {
                     Start a Chat
                   </Button>
                   <Button variant="primary" href='/workorders'>
-                    Workorder Safety Agent
+                    Workplace Safety Agent
                   </Button>
                   <Button>
                     Browse the Glossary
