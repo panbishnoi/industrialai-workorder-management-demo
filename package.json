@@ -20,7 +20,6 @@
     "@cloudscape-design/global-styles": "^1.0.34",
     "leaflet": "^1.9.4",
     "react-leaflet": "^4.2.0",
-    "leaflet-defaulticon-compatibility": "^0.1.2",
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@langchain/aws": "^0.1.1",
