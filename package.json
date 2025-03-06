@@ -48,7 +48,15 @@
     "remark-gfm": "^4.0.0",
     "sass": "^1.79.4",
     "sharp": "^0.33.5",
-    "yaml": "^2.7.0"
+    "yaml": "^2.7.0",
+    "react-leaflet": "^3.2.5",
+    "leaflet": "^1.7.1"
+  },
+  "overrides": {
+    "react-leaflet": {
+      "react": "$react",
+      "react-dom": "$react-dom"
+    }
   },
   "devDependencies": {
     "@aws-amplify/backend": "^1.13.0",
