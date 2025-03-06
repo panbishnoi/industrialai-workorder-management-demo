@@ -13,7 +13,7 @@ frontend:
   phases:
     preBuild:
       commands:
-        - npm install leaflet react-leaflet
+        - npm install leaflet react-leaflet --legacy-peer-deps
     build:
       commands:
         - npm run build
