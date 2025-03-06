@@ -11,9 +11,6 @@ backend:
         - npx ampx pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID --debug
 frontend:
   phases:
-    preBuild:
-      commands:
-        - npm install leaflet react-leaflet --legacy-peer-deps --no-save
     build:
       commands:
         - npm run build
