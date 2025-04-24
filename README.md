@@ -89,33 +89,6 @@ For convenience in future deployments, you may choose to persist the context val
 }
 ```
 
-### Important Outputs
-
-After successful deployment, you'll receive important output values. These values are specific to your deployment and will be different for each account and region. Make note of these outputs as they contain the information you'll need to fill in placeholders in subsequent steps.
-
-Key outputs to note from the MainBackendStack:
-
-* ApiGatewayRestApiEndpoint
-* CognitoIdentityPoolId
-* CognitoUserPoolClientId
-* CognitoUserPoolId
-* RegionName
-
-## Usage
-
-### Demo Chatbot
-There is a demo chatbot webapp in the `frontend/` directory. See the [README](frontend/README.md) for usage details. It needs the outputs from the MainBackendStack.
-
-This is the best way to validate that the MainBackendStack was deployed correctly.
-
-#### Create Cognito Users
-
-1. Navigate to the Amazon Cognito console.
-2. Find your User Pool using the `CognitoUserPoolId` from the MainBackendStack outputs.
-3. In the "Users" section, click "Create user" and follow the instructions.
-
-[More details](https://docs.aws.amazon.com/cognito/latest/developerguide/how-to-create-user-accounts.html#creating-a-new-user-using-the-console)
-
 ## Clean Up
 To avoid further charges, follow the tear down procedure:
 
@@ -125,12 +98,6 @@ To avoid further charges, follow the tear down procedure:
 ```bash
 cdk destroy --all
 ```
-
-3. Some resources may remain after stack deletion:
-   - Delete any Cognito User Pools that you do not wish to keep
-   - Delete any CloudWatch Logs log groups that you do not wish to keep
-   - For any S3 buckets that remain, empty them by disabling logging and configuring a lifecycle policy that expires objects after one day
-   - After a day, go back and delete the buckets
 
 For a comprehensive list of arguments and options, consult the [CDK CLI documentation](https://docs.aws.amazon.com/cdk/v2/guide/cli.html).
 
