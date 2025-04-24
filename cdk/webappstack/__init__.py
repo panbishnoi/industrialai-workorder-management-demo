@@ -39,7 +39,7 @@ class FrontendStack(Stack):
         try:
             # Run npm install and build in the frontend directory
             subprocess.run(
-                "cd ../frontend && npm install && npm run build:skip-typescript",
+                "cd ../frontend && npm install --legacy-peer-deps && npm run build:skip-typescript",
                 shell=True,
                 check=True
             )

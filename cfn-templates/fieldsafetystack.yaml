@@ -33,7 +33,7 @@ Resources:
         Type: NO_ARTIFACTS
       Environment:
         ComputeType: BUILD_GENERAL1_LARGE
-        Image: aws/codebuild/amazonlinux2-x86_64-standard:4.0
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:5.0
         Type: LINUX_CONTAINER
         PrivilegedMode: true
         EnvironmentVariables:
@@ -67,14 +67,14 @@ Resources:
           phases:
             install:
               runtime-versions:
-                nodejs: 20
+                nodejs: 18
+                python: 3.11
               commands:
                 - echo "Installing dependencies..."
+                - pip install --upgrade pip
                 - pip install requests boto3
                 - npm install -g aws-cdk
                 - cdk --version
-                - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
-                - cdk bootstrap aws://$AWS_ACCOUNT_ID/$AWS_REGION
             pre_build:
               commands:
                 - echo "Cloning repository..."
@@ -85,7 +85,10 @@ Resources:
                 - export NODE_OPTIONS="--max_old_space_size=4096" # Increase Node.js memory limit
                 - echo "Building project..."
                 - cd cdk
-                - cdk deploy --all --require-approval never --context openweather_api_key="$OPENWEATHER_API_KEY" --context collaborator_foundation_model="$COLLABORATOR_FOUNDATION_MODEL" --context supervisor_foundation_model="$SUPERVISOR_FOUNDATION_MODEL"
+                - pip install -r requirements.txt
+                - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
+                - cdk bootstrap aws://$AWS_ACCOUNT_ID/$AWS_REGION
+                - cdk deploy --all --require-approval never --context openweather_api_key="$OPENWEATHER_API_KEY" --context collaborator_foundation_model="$COLLABORATOR_FOUNDATION_MODEL" --context supervisor_foundation_model="$SUPERVISOR_FOUNDATION_MODEL" --context skip_frontend_build=true
                 - echo "Build completed successfully"
             post_build:
               commands:
@@ -134,9 +137,32 @@ Resources:
                 - "codebuild:StartBuild"
                 - "codebuild:BatchGetBuilds"
                 - "lambda:InvokeFunction"
+                - "states:CreateStateMachine"
+                - "states:DeleteStateMachine"
+                - "states:DescribeStateMachine"
+                - "states:StartExecution"
+                - "states:StopExecution"
+                - "states:DescribeExecution"
+                - "states:GetExecutionHistory"
               Resource: 
                 - !GetAtt CodeBuildProject.Arn
                 - !GetAtt CFNResponseFunction.Arn
+                - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:*"
+                - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:execution:*"
+        - PolicyName: StepFunctionsAdditionalPermissions
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+                - "events:PutRule"
+                - "events:PutTargets"
+                - "events:DescribeRule"
+                - "events:DeleteRule"
+                - "events:RemoveTargets"
+                - "iam:PassRole"
+                - "iam:GetRole"
+              Resource: "*"
   BuildStateMachine:
     Type: AWS::StepFunctions::StateMachine
     Properties:
