@@ -7,6 +7,7 @@ import { fetchAuthSession } from "aws-amplify/auth";
 import { post } from "aws-amplify/api";
 import { getErrorMessage } from "./utils";
 import { QueryObject,EmergencyCheckQuery } from "@/types";
+import { config } from "./config";
 
 interface WorkOrderResponse {
   body: {
@@ -35,18 +36,16 @@ export interface WorkOrder {
   };
 }
 
-
-const env = import.meta.env; // Vite environment variables
-
+// Use runtime config instead of env variables
 Amplify.configure({
   Auth: {
     Cognito: {
-      userPoolId: env.VITE_COGNITO_USER_POOL_ID,
-      userPoolClientId: env.VITE_COGNITO_USER_POOL_CLIENT_ID,
-      identityPoolId: env.VITE_COGNITO_IDENTITY_POOL_ID,
+      userPoolId: config.COGNITO_USER_POOL_ID,
+      userPoolClientId: config.COGNITO_USER_POOL_CLIENT_ID,
+      identityPoolId: config.COGNITO_IDENTITY_POOL_ID,
       loginWith: {
         oauth: {
-          domain: import.meta.env.VITE_APP_COGNITO_DOMAIN,
+          domain: config.COGNITO_DOMAIN,
           scopes: ["openid", "email"],
           redirectSignIn: [import.meta.env.VITE_APP_REDIRECT_SIGNIN_URL],
           redirectSignOut: [import.meta.env.VITE_APP_REDIRECT_SIGNOUT_URL],
@@ -63,13 +62,13 @@ Amplify.configure({
   ...existingConfig,
   API: {
     REST: {
-      [env.VITE_API_NAME]: {
-        endpoint: env.VITE_API_ENDPOINT,
-        region: env.VITE_AWS_REGION,
+      [config.API_NAME]: {
+        endpoint: config.API_ENDPOINT,
+        region: config.REGION_NAME,
       },
-      [env.VITE_WorkOrder_API_NAME]:{
-        endpoint: env.VITE_WORKORDER_API_ENDPOINT,
-        region: env.VITE_AWS_REGION,
+      [config.WorkOrder_API_NAME]:{
+        endpoint: config.WORKORDER_API_ENDPOINT,
+        region: config.REGION_NAME,
       },
     },
   },
@@ -105,7 +104,7 @@ const getRestInput = async (apiName: string) => {
 
 export async function postSafetyCheckRequest(queryObject: QueryObject) {
   try {
-    const restInput = await getRestInput(env.VITE_API_NAME);
+    const restInput = await getRestInput(config.API_NAME);
     const restOperation = post({
       ...restInput,
       path: `safetycheck/request`,
@@ -132,7 +131,7 @@ interface WorkOrderResponse {
 
 export async function postWorkOrderQuery(): Promise<WorkOrder[]> {
   try {
-    const restInput = await getRestInput(env.VITE_WorkOrder_API_NAME);
+    const restInput = await getRestInput(config.WorkOrder_API_NAME);
     const restOperation = post({
       ...restInput,
       path: `workorders`,
@@ -153,7 +152,7 @@ export async function postWorkOrderQuery(): Promise<WorkOrder[]> {
 
 export async function pollSafetyCheckStatus(requestId: string) {
   try {
-      const restInput = await getRestInput(env.VITE_API_NAME);
+      const restInput = await getRestInput(config.API_NAME);
       const restOperation = await post({
           ...restInput,
           path: `safetycheck/status`,
@@ -173,7 +172,7 @@ export async function pollSafetyCheckStatus(requestId: string) {
 
 export async function postEmergencyCheckRequest(queryObject: EmergencyCheckQuery) {
   try {
-    const restInput = await getRestInput(env.VITE_API_NAME);
+    const restInput = await getRestInput(config.API_NAME);
     const restOperation = post({
       ...restInput,
       path: `emergencycheck/request`,

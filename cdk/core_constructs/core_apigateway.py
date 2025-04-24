@@ -182,7 +182,7 @@ class CoreApiGateway(Construct):
         lambda_integration = apigateway.LambdaIntegration(
             handler=lambda_function,
             proxy=True,  # Use proxy integration
-            timeout=Duration.seconds(90),  # Set the timeout for the integration (90 seconds) to cater for bedrock agent 
+            timeout=Duration.seconds(29),  # Set the timeout for the integration (90 seconds) to cater for bedrock agent 
         )
 
         resource.add_method(

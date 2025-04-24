@@ -2,6 +2,7 @@
 node_modules
 **/node_modules
 cdk/.venv
+.venv
 **/__pycache__
 *.pyc
 

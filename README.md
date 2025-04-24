@@ -1,25 +1,51 @@
-# Gen AI Based field Workforce safety assistant
-
+# Gen AI Based Field Workforce Safety Assistant
 
 ## Architecture Overview
 
+This solution provides a safety assistant for field workforce personnel, leveraging generative AI to help workers assess and mitigate safety risks in industrial environments.
 
 ### Backend
 
+The backend is built using AWS services including:
+- Amazon Bedrock for foundation models
+- Amazon Bedrock Agents for orchestrating multi-agent workflows
+- AWS Lambda for serverless compute
+- Amazon DynamoDB for data storage
+- Amazon API Gateway for REST API endpoints
+- Amazon Cognito for authentication
 
 ## Deployment
+
+You can deploy this solution using either AWS CDK directly or via CloudFormation.
+
 ### Prerequisites
 
 - An AWS account
 - Configure AWS credentials in your environment
 - Download and install [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
-- Download and install [AWS CDK](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html) >= 2.167.2
-- Download and install [Docker](https://docs.docker.com/engine/install/)
-- NodeJS >= 18.0.0
-- Python >= 3.10
-- Access to Amazon Titan Text Embeddings V2 model and Anthropic Claude 3 Haiku model. Enable these in the Amazon Bedrock console (https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/modelaccess). You may need to request access if not already granted.
+- Access to Amazon Bedrock foundation models (Claude 3 Sonnet recommended)
+- OpenWeather API key for weather data integration
+- Enable required models in the Amazon Bedrock console (https://us-east-1.console.aws.amazon.com/bedrock/home?region=us-east-1#/modelaccess). You may need to request access if not already granted.
 
-### Setup
+### Deployment Options
+
+#### Option 1: Deploy using CloudFormation
+
+1. Download the CloudFormation template from the `cfn-templates` directory
+2. Navigate to the AWS CloudFormation console
+3. Create a new stack using the template
+4. Provide the required parameters:
+   - CollaboratorFoundationModel: Foundation model for the collaborator agent (default: anthropic.claude-3-sonnet-20240229-v1:0)
+   - SupervisorFoundationModel: Foundation model for the supervisor agent (default: anthropic.claude-3-sonnet-20240229-v1:0)
+   - OpenWeatherApiKey: Your OpenWeather API key (required)
+5. Wait for the stack to complete deployment (this may take 15-20 minutes)
+
+The CloudFormation template will:
+- Clone the repository from GitHub
+- Bootstrap the CDK environment
+- Deploy all required resources using CDK
+
+#### Option 2: Deploy using CDK directly
 
 1. Create and activate a Python virtual environment:
 
@@ -46,41 +72,26 @@ aws ecr-public get-login-password --region us-east-1 | docker login --username A
 cdk bootstrap
 ```
 
-### Deployment
-These steps may take a long time and produce a lot of output.
-
-Synthesize the CloudFormation template:
-
-```bash
-cdk synth
-```
-
-Deploy the stacks:
+5. Deploy the stacks with required parameters:
 ```bash    
-cdk deploy --all --require-approval never
-
-
-aws cloudfront create-invalidation \
-    --distribution-id E1XTYQEZ2FPIOI \
-    --paths "/*"
+cdk deploy --all --require-approval never --context openweather_api_key="YOUR_API_KEY" --context collaborator_foundation_model="anthropic.claude-3-sonnet-20240229-v1:0" --context supervisor_foundation_model="anthropic.claude-3-sonnet-20240229-v1:0"
+```
 
 For convenience in future deployments, you may choose to persist the context values in `cdk.json`:
 ```json
 {
   "app": "python3 app.py",
-...
   "context": {
-    "oss_collection_name": "my-rag-collection",
-    "oss_index_name": "my-rag-index",
-    "language_code": "es",
-    "max_retrieved_docs": 5,
-    "@aws-cdk/...
+    "openweather_api_key": "YOUR_API_KEY",
+    "collaborator_foundation_model": "anthropic.claude-3-sonnet-20240229-v1:0",
+    "supervisor_foundation_model": "anthropic.claude-3-sonnet-20240229-v1:0"
+  }
+}
 ```
 
-#### Important Outputs
+### Important Outputs
 
 After successful deployment, you'll receive important output values. These values are specific to your deployment and will be different for each account and region. Make note of these outputs as they contain the information you'll need to fill in placeholders in subsequent steps.
-
 
 Key outputs to note from the MainBackendStack:
 
@@ -92,9 +103,8 @@ Key outputs to note from the MainBackendStack:
 
 ## Usage
 
-
 ### Demo Chatbot
-There is a demo chatbwebapp `frontend/`. See the [README](frontend/README.md) for usage details. It needs the outputs from the MainBackendStack.
+There is a demo chatbot webapp in the `frontend/` directory. See the [README](frontend/README.md) for usage details. It needs the outputs from the MainBackendStack.
 
 This is the best way to validate that the MainBackendStack was deployed correctly.
 
@@ -106,18 +116,21 @@ This is the best way to validate that the MainBackendStack was deployed correctl
 
 [More details](https://docs.aws.amazon.com/cognito/latest/developerguide/how-to-create-user-accounts.html#creating-a-new-user-using-the-console)
 
-
 ## Clean Up
 To avoid further charges, follow the tear down procedure:
 
-1. On the AWS CloudFormation console or using AWS CDK in the terminal, destroy the stacks that were deployed. Some of the S3 buckets, CloudWatch Logs log groups, and Cognito user pools will remain as they will not be empty.
+1. If you deployed using CloudFormation, delete the CloudFormation stack from the AWS console.
+
+2. If you deployed using CDK directly, destroy the stacks:
 ```bash
 cdk destroy --all
 ```
-2. Delete any Cognito User Pools that you do not wish to keep.
-2. Delete any CloudWatch Logs log groups that you do not wish to keep.
-3. In any S3 buckets that remain that you do not wish to keep, empty the buckets by disabling logging and configuring a lifecycle policy that expires objects after one day. Wait a day.
-4. After a day, go back and delete the buckets.
+
+3. Some resources may remain after stack deletion:
+   - Delete any Cognito User Pools that you do not wish to keep
+   - Delete any CloudWatch Logs log groups that you do not wish to keep
+   - For any S3 buckets that remain, empty them by disabling logging and configuring a lifecycle policy that expires objects after one day
+   - After a day, go back and delete the buckets
 
 For a comprehensive list of arguments and options, consult the [CDK CLI documentation](https://docs.aws.amazon.com/cdk/v2/guide/cli.html).
 

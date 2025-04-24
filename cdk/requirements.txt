@@ -1,5 +1,5 @@
-aws-cdk-lib==2.167.2
-aws_cdk.aws_lambda_python_alpha==2.167.2a0
+aws-cdk-lib==2.190.0
+aws_cdk.aws_lambda_python_alpha==2.190.0a0
 constructs==10.4.2
 cdk_nag==2.34.2
-aws_cdk.aws_sagemaker_alpha==2.167.2a0
+aws_cdk.aws_sagemaker_alpha==2.190.0a0

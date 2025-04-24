@@ -1,15 +1,20 @@
 import { useAuthenticator } from "@aws-amplify/ui-react";
 import TopNavigation from "@cloudscape-design/components/top-navigation";
 import { useEffect, useState } from "react";
-import { fetchUserAttributes, type FetchUserAttributesOutput } from "aws-amplify/auth";
+import { fetchUserAttributes } from "aws-amplify/auth";
+
+// Define the type for user attributes
+type UserAttributes = {
+  email?: string;
+  [key: string]: string | undefined;
+};
 
 export default function NavBar() {
   const { user, signOut } = useAuthenticator((context) => [context.user]);
   const env = import.meta.env; // Vite environment variables
   
   // Update the type to match fetchUserAttributes output
-  const [userAttributes, setUserAttributes] = useState<FetchUserAttributesOutput>({});
-
+  const [userAttributes, setUserAttributes] = useState<UserAttributes>({});
 
   // Alternative approach using fetchUserAttributes
   useEffect(() => {
@@ -26,7 +31,6 @@ export default function NavBar() {
       getUserAttributes();
     }
   }, [user]);
-
 
   return (
     <TopNavigation

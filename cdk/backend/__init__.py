@@ -15,7 +15,6 @@ import core_constructs as coreconstructs
 from safetycheckrequestflow import SafetyCheckRequestStack
 from workorderlistflow import WorkOrderApiStack
 from safetycheckprocessorflow import SafetyCheckProcessorStack
-from safetycheckbatchflow import SafetyCheckBatchStack
 from vicemergencyflow import VicEmergencyStack
 
 EMBEDDINGS_SIZE = 512
@@ -62,7 +61,7 @@ class BackendStack(Stack):
             removal_policy= RemovalPolicy.DESTROY
         )
 
-        # Gen AI Chat workflow
+        # Safety check request flow
         self.safetycheckrequestflow = SafetyCheckRequestStack(
             self,
             "SafetyCheckRequestStack",
@@ -97,18 +96,7 @@ class BackendStack(Stack):
             dynamo_db_workorder_table=work_order_table_name,
         )
 
-        # SafetyCheck Batch flow
-        self.safetycheckProcessorStack = SafetyCheckBatchStack(
-            self,
-            "SafetyCheckBatchStack",
-            work_order_request_table=self.work_order_requests_table,
-            dynamo_db_workorder_table=work_order_table_name,
-            dynamo_db_location_table=location_table_name
-        )
-
-
-
-        # SafetyCheck Batch flow
+        # Emergency Warnings flow
         self.safetycheckProcessorStack = VicEmergencyStack(
             self,
             "VicEmergencyStack",
@@ -116,10 +104,53 @@ class BackendStack(Stack):
             dynamo_db_workorder_table=work_order_table_name,
         )
 
+        # Store outputs as properties for easy access by the frontend stack
+        self.api_endpoint = self.apigw.rest_api.url
+        self.workorder_api_endpoint = self.apigw_workorder.rest_api.url
+        self.region_name = self.region
+        self.user_pool_id = self.cognito.user_pool.user_pool_id
+        self.user_pool_client_id = self.cognito.user_pool_client.user_pool_client_id
+        self.identity_pool_id = self.cognito.identity_pool.ref
 
+        # Export all required outputs for frontend
         CfnOutput(
             self,
             "RegionName",
-            value=self.region,
+            value=self.region_name,
             export_name=f"{Stack.of(self).stack_name}RegionName",
+        )
+        
+        CfnOutput(
+            self,
+            "ApiGatewayRestApiEndpoint",
+            value=self.api_endpoint,
+            export_name=f"{Stack.of(self).stack_name}ApiEndpoint",
+        )
+        
+        CfnOutput(
+            self,
+            "WorkOrderApiEndpoint",
+            value=self.workorder_api_endpoint,
+            export_name=f"{Stack.of(self).stack_name}WorkOrderApiEndpoint",
+        )
+        
+        CfnOutput(
+            self,
+            "CognitoUserPoolId",
+            value=self.user_pool_id,
+            export_name=f"{Stack.of(self).stack_name}UserPoolId",
+        )
+        
+        CfnOutput(
+            self,
+            "CognitoUserPoolClientId",
+            value=self.user_pool_client_id,
+            export_name=f"{Stack.of(self).stack_name}UserPoolClientId",
+        )
+        
+        CfnOutput(
+            self,
+            "CognitoIdentityPoolId",
+            value=self.identity_pool_id,
+            export_name=f"{Stack.of(self).stack_name}IdentityPoolId",
         )

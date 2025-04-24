@@ -43,9 +43,9 @@ class SafetyCheckProcessorStack(Construct):
             environment={
                 "LOG_LEVEL": "DEBUG",
                 "POWERTOOLS_SERVICE_NAME": "SafetyCheckFlow",
-                "AGENT_ID": agent_id,
-                "AGENT_ALIAS_ID": agent_alias_id,
-                "WORK_ORDER_TABLE_NAME": dynamo_db_workorder_table,
+                "AGENT_ID": str(agent_id),
+                "AGENT_ALIAS_ID": str(agent_alias_id),
+                "WORK_ORDER_TABLE_NAME": str(dynamo_db_workorder_table),
                 "WORK_ORDER_REQUEST_TABLE_NAME": work_order_requests_table.table_name
             },
         )
