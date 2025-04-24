@@ -393,10 +393,8 @@ Resources:
                   # The state machine will send the response after the build completes
                   # This makes CloudFormation wait for the build to complete
                   
-                  # Return a physical resource ID for tracking
-                  return {
-                      'PhysicalResourceId': physical_id
-                  }
+                  # DO NOT return anything here - this is important!
+                  # Just let the Lambda function complete without sending a response
                   
               except Exception as e:
                   print(f"Error starting state machine: {str(e)}")

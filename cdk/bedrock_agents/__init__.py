@@ -696,7 +696,7 @@ class BedrockAgentsStack(Stack):
 
         # Create Weather Agent Action Group
         weather_agent_action_group = bedrock.CfnAgent.AgentActionGroupProperty(
-            action_group_name="f{self.stack_name}-WeatherForecast",
+            action_group_name="WeatherForecast",
             action_group_executor=bedrock.CfnAgent.ActionGroupExecutorProperty(
                 lambda_=weather_agent_function.function_arn
             ),
@@ -731,7 +731,7 @@ class BedrockAgentsStack(Stack):
         
         # Create Location Alert Action Group
         location_alert_action_group = bedrock.CfnAgent.AgentActionGroupProperty(
-            action_group_name="f{self.stack_name}-LocationAlerts",
+            action_group_name="LocationAlerts",
             action_group_executor=bedrock.CfnAgent.ActionGroupExecutorProperty(
                 lambda_=location_alert_function.function_arn
             ),
@@ -756,7 +756,7 @@ class BedrockAgentsStack(Stack):
         
         # Create Emergency Alert Action Group
         emergency_alert_action_group = bedrock.CfnAgent.AgentActionGroupProperty(
-            action_group_name="f{self.stack_name}-EmergencyAlerts",
+            action_group_name="EmergencyAlerts",
             action_group_executor=bedrock.CfnAgent.ActionGroupExecutorProperty(
                 lambda_=emergency_alert_function.function_arn
             ),
