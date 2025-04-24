@@ -355,11 +355,43 @@ Resources:
           import boto3
           import json
           import os
+          import urllib3
+
+          def send_cfn_response(event, context, response_status, response_data, physical_resource_id=None):
+              response_body = {
+                  'Status': response_status,
+                  'Reason': 'See the details in CloudWatch Log Stream: ' + context.log_stream_name,
+                  'PhysicalResourceId': physical_resource_id or context.log_stream_name,
+                  'StackId': event['StackId'],
+                  'RequestId': event['RequestId'],
+                  'LogicalResourceId': event['LogicalResourceId'],
+                  'Data': response_data
+              }
+              
+              http = urllib3.PoolManager()
+              try:
+                  response = http.request(
+                      'PUT',
+                      event['ResponseURL'],
+                      body=json.dumps(response_body).encode('utf-8'),
+                      headers={'Content-Type': 'application/json'}
+                  )
+                  print(f"Status code: {response.status}")
+              except Exception as e:
+                  print(f"Error sending response: {str(e)}")
+                  raise
 
           def handler(event, context):
               print(f"Received event: {json.dumps(event)}")  # Log the input
               
-              if event.get('RequestType') != 'Delete':
+              physical_id = event.get('PhysicalResourceId', 'BuildTrigger')
+              
+              # For Delete requests, just send success response
+              if event.get('RequestType') == 'Delete':
+                  send_cfn_response(event, context, 'SUCCESS', {}, physical_id)
+                  return
+                  
+              try:
                   sfn = boto3.client('stepfunctions')
                   
                   # Start the state machine with the CloudFormation custom resource event
@@ -367,11 +399,21 @@ Resources:
                       stateMachineArn=os.environ['STATE_MACHINE_ARN'],
                       input=json.dumps(event)
                   )
-                  print(f"Started execution: {response['executionArn']}")
-              
-              return {
-                  'PhysicalResourceId': event.get('PhysicalResourceId', 'BuildTrigger')
-              }
+                  execution_arn = response['executionArn']
+                  print(f"Started execution: {execution_arn}")
+                  
+                  # For Create/Update, we're delegating the response to the state machine
+                  # So we send a success response immediately with the execution ARN
+                  send_cfn_response(event, context, 'SUCCESS', {
+                      'ExecutionArn': execution_arn,
+                      'Message': 'Build process started. Check Step Functions for status.'
+                  }, physical_id)
+                  
+              except Exception as e:
+                  print(f"Error starting state machine: {str(e)}")
+                  send_cfn_response(event, context, 'FAILED', {
+                      'Error': str(e)
+                  }, physical_id)
   BuildTrigger:
     Type: Custom::BuildTrigger
     DependsOn:

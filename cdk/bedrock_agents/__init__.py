@@ -51,7 +51,7 @@ class BedrockAgentsStack(Stack):
         # Create S3 Bucket for CSV files
         data_bucket = s3.Bucket(
             self,
-            "DataBucket",
+            f"{self.stack_name}-DataBucket",
             versioned=True,
             encryption=s3.BucketEncryption.S3_MANAGED,
             removal_policy=RemovalPolicy.DESTROY,
@@ -74,7 +74,7 @@ class BedrockAgentsStack(Stack):
         # Deploy CSV files from local data directory to S3 bucket
         data_deployment = s3deploy.BucketDeployment(
              self,
-             "DeployCSVFiles",
+             f"{self.stack_name}-DeployCSVFiles",
              sources=[s3deploy.Source.asset("../data", exclude=["**/*", "!**/*.csv"])],
              destination_bucket=data_bucket,
              log_retention=logs.RetentionDays.ONE_WEEK,
@@ -96,7 +96,7 @@ class BedrockAgentsStack(Stack):
         # Create DynamoDB Tables
         work_orders_table = dynamodb.Table(
             self,
-            "WorkOrdersTable",
+            f"{self.stack_name}-WorkOrdersTable",
             table_name=f"{construct_id.lower()}-work-orders",
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
             partition_key=dynamodb.Attribute(
@@ -117,7 +117,7 @@ class BedrockAgentsStack(Stack):
 
         locations_table = dynamodb.Table(
             self,
-            "LocationsTable",
+            f"{self.stack_name}-LocationsTable",
             table_name=f"{construct_id.lower()}-locations",
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
             partition_key=dynamodb.Attribute(
@@ -129,7 +129,7 @@ class BedrockAgentsStack(Stack):
 
         hazards_table = dynamodb.Table(
             self,
-            "HazardsTable",
+            f"{self.stack_name}-HazardsTable",
             table_name=f"{construct_id.lower()}-hazards",
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
             partition_key=dynamodb.Attribute(
@@ -150,7 +150,7 @@ class BedrockAgentsStack(Stack):
 
         incidents_table = dynamodb.Table(
             self,
-            "IncidentsTable",
+            f"{self.stack_name}-IncidentsTable",
             table_name=f"{construct_id.lower()}-incidents",
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
             partition_key=dynamodb.Attribute(
@@ -171,7 +171,7 @@ class BedrockAgentsStack(Stack):
 
         control_measures_table = dynamodb.Table(
             self,
-            "ControlMeasuresTable",
+            f"{self.stack_name}-ControlMeasuresTable",
             table_name=f"{construct_id.lower()}-control-measures",
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
             partition_key=dynamodb.Attribute(
@@ -192,7 +192,7 @@ class BedrockAgentsStack(Stack):
 
         assets_table = dynamodb.Table(
             self,
-            "AssetsTable",
+            f"{self.stack_name}-AssetsTable",
             table_name=f"{construct_id.lower()}-assets",
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
             partition_key=dynamodb.Attribute(
@@ -213,7 +213,7 @@ class BedrockAgentsStack(Stack):
 
         location_hazards_table = dynamodb.Table(
             self,
-            "LocationHazardsTable",
+            f"{self.stack_name}-LocationHazardsTable",
             table_name=f"{construct_id.lower()}-location-hazards",
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
             partition_key=dynamodb.Attribute(
@@ -239,7 +239,7 @@ class BedrockAgentsStack(Stack):
         # Create Lambda execution role
         lambda_execution_role = iam.Role(
             self,
-            "LambdaExecutionRole",
+            f"{self.stack_name}-LambdaExecutionRole",
             assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
             managed_policies=[
                 iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSLambdaBasicExecutionRole")
@@ -326,7 +326,7 @@ class BedrockAgentsStack(Stack):
         # Create Data Import Lambda Function
         data_import_function = lambda_.Function(
             self,
-            "DataImportFunction",
+            f"{self.stack_name}-DataImportFunction",
             function_name=f"{construct_id.lower()}-data-import",
             runtime=lambda_.Runtime.PYTHON_3_13,  # Updated to latest Python runtime
             handler="index.handler",
@@ -359,7 +359,7 @@ class BedrockAgentsStack(Stack):
         # Create a simple custom resource to trigger the data import function after deployment
         data_import_trigger = CustomResource(
             self,
-            "DataImportTrigger",
+            f"{self.stack_name}-DataImportTrigger",
             service_token=data_import_function.function_arn,
         )
         
@@ -376,7 +376,7 @@ class BedrockAgentsStack(Stack):
         # Create Weather Agent Lambda Function
         weather_agent_function = lambda_.Function(
             self,
-            "WeatherAgentFunction",
+            f"{self.stack_name}-WeatherAgentFunction",
             function_name=f"{construct_id.lower()}-weather-agent",
             runtime=lambda_.Runtime.PYTHON_3_13,  # Updated to latest Python runtime
             handler="index.lambda_handler",
@@ -404,7 +404,7 @@ class BedrockAgentsStack(Stack):
         # Create Location Alert Lambda Function
         location_alert_function = lambda_.Function(
             self,
-            "LocationAlertFunction",
+            f"{self.stack_name}-LocationAlertFunction",
             function_name=f"{construct_id.lower()}-location-alert",
             runtime=lambda_.Runtime.PYTHON_3_13,  # Updated to latest Python runtime
             handler="index.lambda_handler",
@@ -437,7 +437,7 @@ class BedrockAgentsStack(Stack):
         # Create Emergency Alert Lambda Function
         emergency_alert_function = lambda_.Function(
             self,
-            "EmergencyAlertFunction",
+            f"{self.stack_name}-EmergencyAlertFunction",
             function_name=f"{construct_id.lower()}-emergency-alert",
             runtime=lambda_.Runtime.PYTHON_3_13,  # Updated to latest Python runtime
             handler="index.lambda_handler",
@@ -464,7 +464,7 @@ class BedrockAgentsStack(Stack):
         # Create Weather Agent IAM Role
         weather_agent_role = iam.Role(
             self,
-            "WeatherBedrockAgentExecutionRole",
+            f"{self.stack_name}-WeatherBedrockAgentExecutionRole",
             assumed_by=iam.ServicePrincipal("bedrock.amazonaws.com"),
             description='Execution role for Weather Bedrock Agent'
         )
@@ -492,7 +492,7 @@ class BedrockAgentsStack(Stack):
         # Create Location Alert Agent IAM Role
         location_alert_agent_role = iam.Role(
             self,
-            "LocationAlertBedrockAgentExecutionRole",
+            f"{self.stack_name}-LocationAlertBedrockAgentExecutionRole",
             assumed_by=iam.ServicePrincipal("bedrock.amazonaws.com"),
             description='Execution role for Location Alert Bedrock Agent'
         )
@@ -696,7 +696,7 @@ class BedrockAgentsStack(Stack):
 
         # Create Weather Agent Action Group
         weather_agent_action_group = bedrock.CfnAgent.AgentActionGroupProperty(
-            action_group_name="WeatherForecast",
+            action_group_name="f{self.stack_name}-WeatherForecast",
             action_group_executor=bedrock.CfnAgent.ActionGroupExecutorProperty(
                 lambda_=weather_agent_function.function_arn
             ),
@@ -731,7 +731,7 @@ class BedrockAgentsStack(Stack):
         
         # Create Location Alert Action Group
         location_alert_action_group = bedrock.CfnAgent.AgentActionGroupProperty(
-            action_group_name="LocationAlerts",
+            action_group_name="f{self.stack_name}-LocationAlerts",
             action_group_executor=bedrock.CfnAgent.ActionGroupExecutorProperty(
                 lambda_=location_alert_function.function_arn
             ),
@@ -756,7 +756,7 @@ class BedrockAgentsStack(Stack):
         
         # Create Emergency Alert Action Group
         emergency_alert_action_group = bedrock.CfnAgent.AgentActionGroupProperty(
-            action_group_name="EmergencyAlerts",
+            action_group_name="f{self.stack_name}-EmergencyAlerts",
             action_group_executor=bedrock.CfnAgent.ActionGroupExecutorProperty(
                 lambda_=emergency_alert_function.function_arn
             ),
@@ -787,11 +787,11 @@ class BedrockAgentsStack(Stack):
         # Create Weather Agent with autoPrepare=True
         weather_agent = bedrock.CfnAgent(
             self,
-            "WeatherAgent",
-            agent_name="WeatherAgent",
+            "You are a weather forecast agent. On getting access to the latitude, longitude and target_date_time, you will be able to forecast the weather",
+            agent_name="f{self.stack_name}-WeatherAgent",
             agent_resource_role_arn=weather_agent_role.role_arn,
             foundation_model=collaborator_foundation_model,
-            instruction="You are a weather assistant that provides weather forecasts for specific locations and times.",
+            instruction="Goal: Fetch the weather information at a latitude and longitude at a target datetime.,Instructions: Fetch the weather information at a latitude and longitude at a target datetime. You may get the Workorder details in JSON format including workorder location",
             action_groups=[weather_agent_action_group],
             idle_session_ttl_in_seconds=1800,
             auto_prepare=True  # Use autoPrepare instead of custom resource
@@ -800,11 +800,11 @@ class BedrockAgentsStack(Stack):
         # Create Location Alert Agent with autoPrepare=True
         location_alert_agent = bedrock.CfnAgent(
             self,
-            "LocationAlertAgent",
-            agent_name="LocationAlertAgent",
+            "You are a safety officer whose job is to find all reported incidents at the location, all hazards reported the location and then prepare a safety briefing for the field workforce technician",
+            agent_name="f{self.stack_name}-LocationAlertAgent",
             agent_resource_role_arn=location_alert_agent_role.role_arn,
             foundation_model=collaborator_foundation_model,
-            instruction="You are a safety assistant that provides safety alerts for work order locations.",
+            instruction="Role: Safety officer, Goal: When a workorder is assigned to a field workforce technician, provide all possible incidents and hazards reported at the location for the workorder to ensure that the technician is well informed",
             action_groups=[location_alert_action_group],
             idle_session_ttl_in_seconds=1800,
             auto_prepare=True  # Use autoPrepare instead of custom resource
@@ -813,11 +813,11 @@ class BedrockAgentsStack(Stack):
         # Create Emergency Alert Agent with autoPrepare=True
         emergency_alert_agent = bedrock.CfnAgent(
             self,
-            "EmergencyAlertAgent",
-            agent_name="EmergencyAlertAgent",
+            "Agent that fetches the Emergency  Alerts",
+            agent_name="f{self.stack_name}-EmergencyAlertAgent",
             agent_resource_role_arn=emergency_alert_agent_role.role_arn,
             foundation_model=collaborator_foundation_model,
-            instruction="You are an emergency assistant that provides emergency alerts for specific locations.",
+            instruction="You are an emergency assistant that provides emergency alerts for specific locations. Fetch the emergency warnings at a latitude and longitude.You will get the latitude and longitude details from Workorder location.",
             action_groups=[emergency_alert_action_group],
             idle_session_ttl_in_seconds=1800,
             auto_prepare=True  # Use autoPrepare instead of custom resource
@@ -857,10 +857,7 @@ class BedrockAgentsStack(Stack):
             agent_name="SupervisorAgent",
             agent_resource_role_arn=supervisor_agent_role.role_arn,
             foundation_model=supervisor_foundation_model,
-            instruction="""You are a Workorder Safety helper bot. You must perform hazard and weather checks against a supplied work order. 
-            When you receive a work order, extract the workorder and location information from the JSON and perform hazard, weather, and emergency checks using provided collaborator agents. 
-            You must make a call to all the available collaborators to come up with a comprehensive safety briefing. 
-            The report must be returned in valid HTML format with proper structure and semantic tags for rendering on a web application. Use headings, paragraphs, bullet points, and other appropriate HTML elements to organize the content.""",
+            instruction="""You are a Workorder Safety helper bot. You must perform hazard, emergency and weather checks against a supplied work order. When you receive a work order, extract the workorder and location information from the JSON and perform hazard, weather, and emergency checks using provided agents. You must make a call to all the available collaborators to come up with a comprehensive safety briefing. The report must be returned in valid HTML format with proper structure and semantic tags for rendering on a web application. Use headings, paragraphs, bullet points, and other appropriate HTML elements to organize the content. The report must start with a proper title.""",
             idle_session_ttl_in_seconds=1800,
             auto_prepare=True,  # Use autoPrepare instead of custom resource
             # Add agent collaboration configuration
