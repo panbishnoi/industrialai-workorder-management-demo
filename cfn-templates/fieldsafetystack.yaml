@@ -213,7 +213,8 @@ Resources:
                   "Data": {
                     "BuildId.$": "$.Build.Id",
                     "BuildArn.$": "$.Build.Arn",
-                    "BuildStatus.$": "$.Build.BuildStatus"
+                    "BuildStatus": "COMPLETED",
+                    "BuildResult.$": "$.Build.BuildStatus"
                   }
                 }
               },
@@ -237,7 +238,8 @@ Resources:
                   "Data": {
                     "BuildId.$": "$.Build.Id",
                     "BuildArn.$": "$.Build.Arn",
-                    "BuildStatus.$": "$.Build.BuildStatus",
+                    "BuildStatus": "FAILED",
+                    "BuildResult.$": "$.Build.BuildStatus",
                     "FailureReason.$": "States.Format('Build failed: {}', $.Build.Phases[?(@.PhaseStatus == 'FAILED')].Contexts[0].Message)"
                   }
                 }
@@ -264,6 +266,7 @@ Resources:
     Properties:
       Handler: index.handler
       Runtime: python3.11
+      Timeout: 30  # Add timeout
       Role: !GetAtt CFNResponseRole.Arn
       Code:
         ZipFile: |
@@ -274,8 +277,12 @@ Resources:
           FAILED = "FAILED"
           
           def send(event, context, response_status, response_data):
-              # Extract Build object from response_data to pass through
-              build_info = response_data.get('Build', {})
+              # Ensure BuildStatus is included in the response data
+              if 'BuildStatus' not in response_data:
+                  if response_status == SUCCESS:
+                      response_data['BuildStatus'] = 'COMPLETED'
+                  else:
+                      response_data['BuildStatus'] = 'FAILED'
               
               response_body = {
                   'Status': response_status,
@@ -284,9 +291,7 @@ Resources:
                   'StackId': event['StackId'],
                   'RequestId': event['RequestId'],
                   'LogicalResourceId': event['LogicalResourceId'],
-                  'Data': response_data,
-                  # Add Build at the top level
-                  'Build': build_info
+                  'Data': response_data
               }
               
               http = urllib3.PoolManager()
@@ -306,20 +311,24 @@ Resources:
               try:
                   print(f"Received event: {json.dumps(event)}")
                   status = SUCCESS if event.get('Status') == 'SUCCESS' else FAILED
+                  
+                  # Prepare response data with BuildStatus
                   response_data = {
                       'BuildId': event.get('PhysicalResourceId'),
-                      'Build': {
-                          'buildStatus': event.get('Status', 'FAILED')
-                      }
+                      'BuildStatus': 'COMPLETED' if status == SUCCESS else 'FAILED'
                   }
+                  
+                  # Include any additional data from the event
+                  if 'Data' in event and isinstance(event['Data'], dict):
+                      for key, value in event['Data'].items():
+                          response_data[key] = value
+                  
                   send(event, context, status, response_data)
               except Exception as e:
                   print(f"Error in handler: {str(e)}")
                   send(event, context, FAILED, {
                       'Error': str(e),
-                      'Build': {
-                          'buildStatus': 'FAILED'
-                      }
+                      'BuildStatus': 'FAILED'
                   })
   BuildTriggerRole:
     Type: AWS::IAM::Role
@@ -346,6 +355,7 @@ Resources:
     Properties:
       Handler: index.handler
       Runtime: python3.11
+      Timeout: 60  # Add timeout to prevent Lambda timeout issues
       Role: !GetAtt BuildTriggerRole.Arn
       Environment:
         Variables:
@@ -356,7 +366,47 @@ Resources:
           import json
           import os
           import urllib3
-
+          
+          def handler(event, context):
+              print(f"Received event: {json.dumps(event)}")  # Log the input
+              
+              physical_id = event.get('PhysicalResourceId', 'BuildTrigger')
+              
+              # For Delete requests, send a response immediately
+              if event.get('RequestType') == 'Delete':
+                  send_cfn_response(event, context, 'SUCCESS', {
+                      'BuildStatus': 'DELETED'
+                  }, physical_id)
+                  return
+              
+              try:
+                  sfn = boto3.client('stepfunctions')
+                  
+                  # Start the state machine with the CloudFormation custom resource event
+                  response = sfn.start_execution(
+                      stateMachineArn=os.environ['STATE_MACHINE_ARN'],
+                      input=json.dumps(event)
+                  )
+                  print(f"Started execution: {response['executionArn']}")
+                  
+                  # For Create/Update, we DO NOT send a response here
+                  # The state machine will send the response after the build completes
+                  # This makes CloudFormation wait for the build to complete
+                  
+                  # Return a physical resource ID for tracking
+                  return {
+                      'PhysicalResourceId': physical_id
+                  }
+                  
+              except Exception as e:
+                  print(f"Error starting state machine: {str(e)}")
+                  # If there's an error starting the state machine, send a failure response
+                  send_cfn_response(event, context, 'FAILED', {
+                      'Error': str(e),
+                      'BuildStatus': 'FAILED'
+                  }, physical_id)
+          
+          # Helper function to send CloudFormation response
           def send_cfn_response(event, context, response_status, response_data, physical_resource_id=None):
               response_body = {
                   'Status': response_status,
@@ -380,40 +430,6 @@ Resources:
               except Exception as e:
                   print(f"Error sending response: {str(e)}")
                   raise
-
-          def handler(event, context):
-              print(f"Received event: {json.dumps(event)}")  # Log the input
-              
-              physical_id = event.get('PhysicalResourceId', 'BuildTrigger')
-              
-              # For Delete requests, just send success response
-              if event.get('RequestType') == 'Delete':
-                  send_cfn_response(event, context, 'SUCCESS', {}, physical_id)
-                  return
-                  
-              try:
-                  sfn = boto3.client('stepfunctions')
-                  
-                  # Start the state machine with the CloudFormation custom resource event
-                  response = sfn.start_execution(
-                      stateMachineArn=os.environ['STATE_MACHINE_ARN'],
-                      input=json.dumps(event)
-                  )
-                  execution_arn = response['executionArn']
-                  print(f"Started execution: {execution_arn}")
-                  
-                  # For Create/Update, we're delegating the response to the state machine
-                  # So we send a success response immediately with the execution ARN
-                  send_cfn_response(event, context, 'SUCCESS', {
-                      'ExecutionArn': execution_arn,
-                      'Message': 'Build process started. Check Step Functions for status.'
-                  }, physical_id)
-                  
-              except Exception as e:
-                  print(f"Error starting state machine: {str(e)}")
-                  send_cfn_response(event, context, 'FAILED', {
-                      'Error': str(e)
-                  }, physical_id)
   BuildTrigger:
     Type: Custom::BuildTrigger
     DependsOn:
@@ -427,3 +443,9 @@ Outputs:
   DeploymentStatus:
     Description: Status of the deployment
     Value: !GetAtt BuildTrigger.BuildStatus
+  CodeBuildProjectName:
+    Description: Name of the CodeBuild project
+    Value: !Ref CodeBuildProject
+  StateMachineArn:
+    Description: ARN of the Step Functions state machine
+    Value: !Ref BuildStateMachine

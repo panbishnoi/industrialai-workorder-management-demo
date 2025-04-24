@@ -787,8 +787,8 @@ class BedrockAgentsStack(Stack):
         # Create Weather Agent with autoPrepare=True
         weather_agent = bedrock.CfnAgent(
             self,
-            "You are a weather forecast agent. On getting access to the latitude, longitude and target_date_time, you will be able to forecast the weather",
-            agent_name="f{self.stack_name}-WeatherAgent",
+            "WeatherAlertAgent",
+            agent_name="FieldSafetyWeatherAgent",
             agent_resource_role_arn=weather_agent_role.role_arn,
             foundation_model=collaborator_foundation_model,
             instruction="Goal: Fetch the weather information at a latitude and longitude at a target datetime.,Instructions: Fetch the weather information at a latitude and longitude at a target datetime. You may get the Workorder details in JSON format including workorder location",
@@ -800,8 +800,8 @@ class BedrockAgentsStack(Stack):
         # Create Location Alert Agent with autoPrepare=True
         location_alert_agent = bedrock.CfnAgent(
             self,
-            "You are a safety officer whose job is to find all reported incidents at the location, all hazards reported the location and then prepare a safety briefing for the field workforce technician",
-            agent_name="f{self.stack_name}-LocationAlertAgent",
+            "LocationAlertAgent",
+            agent_name="FieldSafetyLocationAlertAgent",
             agent_resource_role_arn=location_alert_agent_role.role_arn,
             foundation_model=collaborator_foundation_model,
             instruction="Role: Safety officer, Goal: When a workorder is assigned to a field workforce technician, provide all possible incidents and hazards reported at the location for the workorder to ensure that the technician is well informed",
@@ -813,8 +813,8 @@ class BedrockAgentsStack(Stack):
         # Create Emergency Alert Agent with autoPrepare=True
         emergency_alert_agent = bedrock.CfnAgent(
             self,
-            "Agent that fetches the Emergency  Alerts",
-            agent_name="f{self.stack_name}-EmergencyAlertAgent",
+            "EmergencyAlertAgent",
+            agent_name="FieldSafetyEmergencyAlertAgent",
             agent_resource_role_arn=emergency_alert_agent_role.role_arn,
             foundation_model=collaborator_foundation_model,
             instruction="You are an emergency assistant that provides emergency alerts for specific locations. Fetch the emergency warnings at a latitude and longitude.You will get the latitude and longitude details from Workorder location.",
@@ -854,7 +854,7 @@ class BedrockAgentsStack(Stack):
         supervisor_agent = bedrock.CfnAgent(
             self,
             "SupervisorAgent",
-            agent_name="SupervisorAgent",
+            agent_name="FieldSafetySupervisorAgent",
             agent_resource_role_arn=supervisor_agent_role.role_arn,
             foundation_model=supervisor_foundation_model,
             instruction="""You are a Workorder Safety helper bot. You must perform hazard, emergency and weather checks against a supplied work order. When you receive a work order, extract the workorder and location information from the JSON and perform hazard, weather, and emergency checks using provided agents. You must make a call to all the available collaborators to come up with a comprehensive safety briefing. The report must be returned in valid HTML format with proper structure and semantic tags for rendering on a web application. Use headings, paragraphs, bullet points, and other appropriate HTML elements to organize the content. The report must start with a proper title.""",
