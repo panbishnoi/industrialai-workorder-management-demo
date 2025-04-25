@@ -186,14 +186,6 @@ class FieldWorkforceSafetyParentStack(Stack):
                 description="Frontend App Access URL"
             )
 
-        # Add outputs for Bedrock Agents stack (always deployed)
-        CfnOutput(
-            self,
-            "BedrockAgentStackId",
-            value=bedrock_agents_stack.nested_stack_id,
-            description="Bedrock Agent Stack ID"
-        )
-
 # Create the app and deploy the parent stack
 app = cdk.App()
 parent_stack = FieldWorkforceSafetyParentStack(app, "FieldWorkforceSafetyStack")
