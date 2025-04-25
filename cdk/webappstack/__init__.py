@@ -34,6 +34,53 @@ class FrontendStack(Stack):
                  **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
+        # Add stack-level suppressions right at the beginning
+        NagSuppressions.add_stack_suppressions(
+            self,
+            [
+                {
+                    "id": "AwsSolutions-IAM4",
+                    "reason": "AWS Lambda Basic Execution Role is required for Lambda functions",
+                    "appliesTo": ["Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
+                },
+                {
+                    "id": "AwsSolutions-IAM5",
+                    "reason": "Required S3 permissions for deployment",
+                    "appliesTo": [
+                        "Resource::*/*",
+                        "Action::s3:GetObject*",
+                        "Action::s3:GetBucket*",
+                        "Action::s3:List*",
+                        "Action::s3:DeleteObject*",
+                        "Action::s3:Abort*"
+                    ]
+                },
+                {
+                    "id": "AwsSolutions-L1",
+                    "reason": "CDK-managed Lambda functions use runtimes we cannot directly control",
+                    "appliesTo": [
+                        "Resource::*Custom::CDKBucketDeployment*",
+                        "Resource::*framework-onEvent*"
+                    ]
+                },
+                {
+                    "id": "AwsSolutions-S1",
+                    "reason": "For prototyping purposes we chose not to log access to bucket",
+                    "appliesTo": ["Resource::*Bucket*"]
+                },
+                {
+                    "id": "AwsSolutions-CFR4",
+                    "reason": "Amazon S3 doesn't support HTTPS for website endpoints",
+                    "appliesTo": ["Resource::*Distribution*"]
+                },
+                {
+                    "id": "AwsSolutions-CFR3",
+                    "reason": "For prototyping purposes we chose not to log access",
+                    "appliesTo": ["Resource::*Distribution*"]
+                }
+            ]
+        )
+
         # Build the frontend at synth time
         print("Building frontend application...")
         try:
@@ -65,15 +112,6 @@ class FrontendStack(Stack):
             destination_bucket=webapp_bucket,
         )
         
-        # Add NAG suppressions directly to the resources
-        NagSuppressions.add_resource_suppressions(
-            bucket_deployment,
-            [{
-                "id": "AwsSolutions-L1",
-                "reason": "This is a CDK-managed Lambda function where we cannot directly control the runtime"
-            }]
-        )
-        
         # Create a Lambda function to update config.js with actual backend values
         config_lambda = lambda_.Function(
             self, "ConfigUpdateLambda",
@@ -95,15 +133,6 @@ class FrontendStack(Stack):
             self, "ConfigUpdateProvider",
             on_event_handler=config_lambda,
             log_retention=None
-        )
-
-        # Add NAG suppressions directly to the provider resources
-        NagSuppressions.add_resource_suppressions(
-            provider,
-            [{
-                "id": "AwsSolutions-L1",
-                "reason": "This is a CDK-managed Lambda function where we cannot directly control the runtime"
-            }]
         )
 
         # Create a custom resource to trigger the Lambda function
@@ -190,49 +219,4 @@ class FrontendStack(Stack):
         CfnOutput(
             self, "FrontendUrl",
             value=f"https://{distribution.distribution_domain_name}"
-        )
-
-        # Add NAG suppressions
-        NagSuppressions.add_resource_suppressions(
-            webapp_bucket,
-            [{
-                "id": "AwsSolutions-S1",
-                "reason": "For prototyping purposes we chose not to log access to bucket. You should consider logging as you move to production."
-            }]
-        )
-
-        NagSuppressions.add_resource_suppressions(
-            config_lambda,
-            [{
-                "id": "AwsSolutions-L1",
-                "reason": "Using the latest available runtime for Lambda function"
-            }]
-        )
-
-        NagSuppressions.add_resource_suppressions(
-            config_lambda.role,
-            [{
-                "id": "AwsSolutions-IAM4",
-                "reason": "The Lambda function needs basic execution role permissions"
-            }]
-        )
-
-        NagSuppressions.add_resource_suppressions(
-            config_lambda.role,
-            [{
-                "id": "AwsSolutions-IAM5",
-                "reason": "The Lambda function requires permissions to write to the S3 bucket"
-            }],
-            True
-        )
-
-        NagSuppressions.add_resource_suppressions(
-            distribution,
-            [{
-                "id": "AwsSolutions-CFR4",
-                "reason": "Amazon S3 doesn't support HTTPS for website endpoints"
-            },{
-                "id": "AwsSolutions-CFR3",
-                "reason": "For prototyping purposes we chose not to log access to bucket. You should consider logging as you move to production."
-            }]
         )
