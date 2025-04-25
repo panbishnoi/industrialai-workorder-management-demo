@@ -147,7 +147,7 @@ class FieldWorkforceSafetyParentStack(Stack):
         )
 
         # Conditionally deploy Backend and Frontend stacks based on the single parameter
-        if deploy_frontend.value_as_string == "yes":
+        if deploy_frontend.lower() == "yes":
             # Deploy Backend stack
             backend_stack = BackendNestedStack(
                 self,
