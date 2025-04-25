@@ -21,6 +21,14 @@ Parameters:
     NoEcho: true
     ConstraintDescription: "OpenWeather API key is required"
     AllowedPattern: ".+"
+    
+  DeployFrontend:
+    Type: String
+    Default: "yes"
+    Description: "Deploy the frontend and backend stacks (yes/no)"
+    AllowedValues:
+      - "yes"
+      - "no"
 
 Resources:
   CodeBuildProject:
@@ -53,6 +61,8 @@ Resources:
             Value: !Ref CollaboratorFoundationModel
           - Name: SUPERVISOR_FOUNDATION_MODEL
             Value: !Ref SupervisorFoundationModel
+          - Name: DEPLOY_FRONTEND
+            Value: !Ref DeployFrontend
       ServiceRole:
         Fn::GetAtt:
           - CodeBuildServiceRole
@@ -88,7 +98,7 @@ Resources:
                 - pip install -r requirements.txt
                 - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
                 - cdk bootstrap aws://$AWS_ACCOUNT_ID/$AWS_REGION
-                - cdk deploy --all --require-approval never --context openweather_api_key="$OPENWEATHER_API_KEY" --context collaborator_foundation_model="$COLLABORATOR_FOUNDATION_MODEL" --context supervisor_foundation_model="$SUPERVISOR_FOUNDATION_MODEL" --context skip_frontend_build=true
+                - cdk deploy --all --require-approval never --context openweather_api_key="$OPENWEATHER_API_KEY" --context collaborator_foundation_model="$COLLABORATOR_FOUNDATION_MODEL" --context supervisor_foundation_model="$SUPERVISOR_FOUNDATION_MODEL" --context deploy_frontend="$DEPLOY_FRONTEND"
                 - echo "Build completed successfully"
             post_build:
               commands:
@@ -350,6 +360,16 @@ Resources:
               - Effect: Allow
                 Action: states:StartExecution
                 Resource: !Ref BuildStateMachine
+        - PolicyName: CloudFormationDeleteStack
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudformation:DeleteStack
+                  - cloudformation:ListStacks
+                  - cloudformation:DescribeStacks
+                Resource: "*"
   BuildTriggerLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -372,8 +392,29 @@ Resources:
               
               physical_id = event.get('PhysicalResourceId', 'BuildTrigger')
               
-              # For Delete requests, send a response immediately
+              # For Delete requests, delete the FieldWorkforceSafetyStack and send a response
               if event.get('RequestType') == 'Delete':
+                  try:
+                      # Delete the CDK-deployed stack
+                      cfn = boto3.client('cloudformation')
+                      
+                      # Check if the stack exists before attempting to delete
+                      try:
+                          cfn.describe_stacks(StackName="FieldWorkforceSafetyStack")
+                          print("Deleting FieldWorkforceSafetyStack...")
+                          cfn.delete_stack(StackName="FieldWorkforceSafetyStack")
+                          print("Delete request for FieldWorkforceSafetyStack sent successfully")
+                      except cfn.exceptions.ClientError as e:
+                          # If the stack doesn't exist, that's fine
+                          if "does not exist" in str(e):
+                              print("FieldWorkforceSafetyStack does not exist, nothing to delete")
+                          else:
+                              print(f"Error checking stack: {str(e)}")
+                  except Exception as e:
+                      print(f"Error deleting FieldWorkforceSafetyStack: {str(e)}")
+                      # Continue with the response even if there was an error
+                  
+                  # Send success response for the custom resource
                   send_cfn_response(event, context, 'SUCCESS', {
                       'BuildStatus': 'DELETED'
                   }, physical_id)

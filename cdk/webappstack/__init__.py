@@ -223,7 +223,7 @@ class FrontendStack(Stack):
             default_root_object="index.html",
             web_acl_id=web_acl.attr_arn
         )
-
+        self.frontend_url = f"https://{distribution.distribution_domain_name}"
         # Output CloudFront URL
         CfnOutput(
             self, "FrontendUrl",

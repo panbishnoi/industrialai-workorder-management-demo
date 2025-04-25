@@ -15,6 +15,7 @@
     ]
   },
   "context": {
+    "deploy_frontend": "yes",
     "openweather_api_key": "",
     "collaborator_foundation_model": "anthropic.claude-3-sonnet-20240229-v1:0",
     "supervisor_foundation_model": "anthropic.claude-3-sonnet-20240229-v1:0",
