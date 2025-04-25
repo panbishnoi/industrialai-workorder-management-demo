@@ -52,15 +52,20 @@ class FrontendStack(Stack):
                         "Action::s3:GetBucket*",
                         "Action::s3:List*",
                         "Action::s3:DeleteObject*",
-                        "Action::s3:Abort*"
+                        "Action::s3:Abort*",
+                        # Add specific resource patterns from error messages
+                        "Resource::arn:<AWS::Partition>:s3:::cdk-hnb659fds-assets-<AWS::AccountId>-<AWS::Region>/*",
+                        "Resource::<WebappDeploymentBucket*.Arn>/*",
+                        "Resource::<ConfigUpdateLambda*.Arn>:*"
                     ]
                 },
                 {
                     "id": "AwsSolutions-L1",
                     "reason": "CDK-managed Lambda functions use runtimes we cannot directly control",
                     "appliesTo": [
-                        "Resource::*Custom::CDKBucketDeployment*",
-                        "Resource::*framework-onEvent*"
+                        # More specific patterns for Lambda resources
+                        "Resource::*/Custom::CDKBucketDeployment*/Resource",
+                        "Resource::*/ConfigUpdateProvider/framework-onEvent/Resource"
                     ]
                 },
                 {
