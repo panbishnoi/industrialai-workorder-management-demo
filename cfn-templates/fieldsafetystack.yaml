@@ -98,7 +98,7 @@ Resources:
                 - pip install -r requirements.txt
                 - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
                 - cdk bootstrap aws://$AWS_ACCOUNT_ID/$AWS_REGION
-                - cdk deploy --all --require-approval never --context openweather_api_key="$OPENWEATHER_API_KEY" --context collaborator_foundation_model="$COLLABORATOR_FOUNDATION_MODEL" --context supervisor_foundation_model="$SUPERVISOR_FOUNDATION_MODEL" --context deploy_frontend="$DEPLOY_FRONTEND"
+                - cdk deploy FieldWorkforceSafetyStack --require-approval never --context openweather_api_key="$OPENWEATHER_API_KEY" --context collaborator_foundation_model="$COLLABORATOR_FOUNDATION_MODEL" --context supervisor_foundation_model="$SUPERVISOR_FOUNDATION_MODEL" --context deploy_frontend="$DEPLOY_FRONTEND"
                 - echo "Build completed successfully"
             post_build:
               commands:

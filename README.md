@@ -74,7 +74,7 @@ cdk bootstrap
 
 5. Deploy the stacks with required parameters:
 ```bash    
-cdk deploy --all --require-approval never --context openweather_api_key="YOUR_API_KEY" --context collaborator_foundation_model="anthropic.claude-3-sonnet-20240229-v1:0" --context supervisor_foundation_model="anthropic.claude-3-sonnet-20240229-v1:0"
+cdk deploy FieldWorkforceSafetyStack --require-approval never --context openweather_api_key="YOUR_API_KEY" --context collaborator_foundation_model="anthropic.claude-3-sonnet-20240229-v1:0" --context supervisor_foundation_model="anthropic.claude-3-sonnet-20240229-v1:0"
 ```
 
 For convenience in future deployments, you may choose to persist the context values in `cdk.json`:

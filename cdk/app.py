@@ -35,7 +35,7 @@ class BedrockAgentsNestedStack(NestedStack):
         # We're using composition instead of inheritance to avoid multiple inheritance issues
         self.bedrock_stack = BedrockAgentsStack(
             self,
-            construct_id,  # Pass the construct_id to the inner stack
+            "Stack",  # Use a different construct_id for the inner stack
             collaborator_foundation_model=collaborator_foundation_model,
             supervisor_foundation_model=supervisor_foundation_model,
             openweather_api_key=openweather_api_key
@@ -66,7 +66,7 @@ class BackendNestedStack(NestedStack):
         # Using composition instead of inheritance
         self.backend_stack = BackendStack(
             self,
-            construct_id,  # Pass the construct_id to the inner stack
+            "Stack",  # Use a different construct_id for the inner stack
             language_code=language_code,
             agent_id=agent_id,
             agent_alias_id=agent_alias_id,
@@ -102,7 +102,7 @@ class FrontendNestedStack(NestedStack):
         # Using composition instead of inheritance
         self.frontend_stack = FrontendStack(
             self,
-            construct_id,  # Pass the construct_id to the inner stack
+            "Stack",  # Use a different construct_id for the inner stack
             api_endpoint=api_endpoint,
             workorder_api_endpoint=workorder_api_endpoint,
             region_name=region_name,
