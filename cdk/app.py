@@ -110,6 +110,9 @@ class FrontendNestedStack(NestedStack):
             cognito_user_pool_client_id=cognito_user_pool_client_id,
             cognito_identity_pool_id=cognito_identity_pool_id
         )
+        
+        # Expose frontend URL for parent stack output
+        self.frontend_url = self.frontend_stack.frontend_url
 
 class FieldWorkforceSafetyParentStack(Stack):
     """Parent stack that contains all nested stacks"""
