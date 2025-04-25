@@ -65,28 +65,9 @@ class FrontendStack(Stack):
             destination_bucket=webapp_bucket,
         )
         
-        # Add NAG suppressions for the BucketDeployment construct
-        NagSuppressions.add_resource_suppressions_by_path(
-            self,
-            f"{self.stack_name}/Custom::CDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C/ServiceRole/Resource",
-            [{
-                "id": "AwsSolutions-IAM4",
-                "reason": "AWS Lambda Basic Execution Role is required for the CDK BucketDeployment Lambda function"
-            }]
-        )
-        
-        NagSuppressions.add_resource_suppressions_by_path(
-            self,
-            f"{self.stack_name}/Custom::CDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C/ServiceRole/DefaultPolicy/Resource",
-            [{
-                "id": "AwsSolutions-IAM5",
-                "reason": "The BucketDeployment Lambda function requires these permissions to copy files from the asset bucket to the destination bucket"
-            }]
-        )
-        
-        NagSuppressions.add_resource_suppressions_by_path(
-            self,
-            f"{self.stack_name}/Custom::CDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C/Resource",
+        # Add NAG suppressions directly to the resources
+        NagSuppressions.add_resource_suppressions(
+            bucket_deployment,
             [{
                 "id": "AwsSolutions-L1",
                 "reason": "This is a CDK-managed Lambda function where we cannot directly control the runtime"
@@ -116,31 +97,12 @@ class FrontendStack(Stack):
             log_retention=None
         )
 
-        # Add NAG suppressions for the provider Lambda
-        NagSuppressions.add_resource_suppressions_by_path(
-            self,
-            f"{self.stack_name}/ConfigUpdateProvider/framework-onEvent/Resource",
+        # Add NAG suppressions directly to the provider resources
+        NagSuppressions.add_resource_suppressions(
+            provider,
             [{
                 "id": "AwsSolutions-L1",
                 "reason": "This is a CDK-managed Lambda function where we cannot directly control the runtime"
-            }]
-        )
-
-        NagSuppressions.add_resource_suppressions_by_path(
-            self,
-            f"{self.stack_name}/ConfigUpdateProvider/framework-onEvent/ServiceRole/Resource",
-            [{
-                "id": "AwsSolutions-IAM4",
-                "reason": "AWS Lambda Basic Execution Role is required for the custom resource provider Lambda function"
-            }]
-        )
-
-        NagSuppressions.add_resource_suppressions_by_path(
-            self,
-            f"{self.stack_name}/ConfigUpdateProvider/framework-onEvent/ServiceRole/DefaultPolicy/Resource",
-            [{
-                "id": "AwsSolutions-IAM5",
-                "reason": "The custom resource provider needs to invoke the target Lambda function"
             }]
         )
 
@@ -269,12 +231,7 @@ class FrontendStack(Stack):
             [{
                 "id": "AwsSolutions-CFR4",
                 "reason": "Amazon S3 doesn't support HTTPS for website endpoints"
-            }]
-        )
-
-        NagSuppressions.add_resource_suppressions(
-            distribution,
-            [{
+            },{
                 "id": "AwsSolutions-CFR3",
                 "reason": "For prototyping purposes we chose not to log access to bucket. You should consider logging as you move to production."
             }]
