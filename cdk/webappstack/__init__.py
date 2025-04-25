@@ -1,6 +1,6 @@
 # Copyright 2024 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: LicenseRef-.amazon.com.-AmznSL-1.0
-# Licensed under the Amazon Software License  http://aws.amazon.com/asl/
+# Licensed under the Amazon Software License http://aws.amazon.com/asl/
 
 import os
 import subprocess
@@ -24,7 +24,7 @@ from constructs import Construct
 from cdk_nag import NagSuppressions
 
 class FrontendStack(Stack):
-    def __init__(self, scope: Construct, id: str, 
+    def __init__(self, scope: Construct, id: str,
                  api_endpoint: str,
                  workorder_api_endpoint: str,
                  region_name: str,
@@ -34,67 +34,9 @@ class FrontendStack(Stack):
                  **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
-        # Add comprehensive stack-level suppressions that will work across accounts
-        NagSuppressions.add_stack_suppressions(
-            self,
-            [
-                {
-                    "id": "AwsSolutions-IAM4",
-                    "reason": "AWS Lambda Basic Execution Role is required for Lambda functions",
-                    "appliesTo": ["Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
-                },
-                {
-                    "id": "AwsSolutions-IAM5",
-                    "reason": "Required S3 permissions for deployment",
-                    "appliesTo": [
-                        "Resource::*/*",
-                        "Action::s3:GetObject*",
-                        "Action::s3:GetBucket*",
-                        "Action::s3:List*",
-                        "Action::s3:DeleteObject*",
-                        "Action::s3:Abort*",
-                        # Add specific resource patterns from error messages
-                        "Resource::arn:<AWS::Partition>:s3:::cdk-hnb659fds-assets-<AWS::AccountId>-<AWS::Region>/*",
-                        "Resource::<WebappDeploymentBucket*.Arn>/*",
-                        "Resource::<ConfigUpdateLambda*.Arn>:*"
-                    ]
-                },
-                {
-                    "id": "AwsSolutions-L1",
-                    "reason": "CDK-managed Lambda functions use runtimes we cannot directly control",
-                    "appliesTo": [
-                        # More specific patterns for Lambda resources
-                        "Resource::*/Custom::CDKBucketDeployment*/Resource",
-                        "Resource::*/ConfigUpdateProvider/framework-onEvent/Resource"
-                    ]
-                },
-                {
-                    "id": "AwsSolutions-S1",
-                    "reason": "For prototyping purposes we chose not to log access to bucket",
-                    "appliesTo": ["Resource::*Bucket*"]
-                },
-                {
-                    "id": "AwsSolutions-CFR1",
-                    "reason": "Geo restrictions not required for this demo",
-                    "appliesTo": ["Resource::*Distribution*"]
-                },
-                {
-                    "id": "AwsSolutions-CFR3",
-                    "reason": "Access logging not required for this demo",
-                    "appliesTo": ["Resource::*Distribution*"]
-                },
-                {
-                    "id": "AwsSolutions-CFR4",
-                    "reason": "Using default TLS settings for this demo",
-                    "appliesTo": ["Resource::*Distribution*"]
-                }
-            ]
-        )
-
         # Build the frontend at synth time
         print("Building frontend application...")
         try:
-            # Run npm install and build in the frontend directory
             subprocess.run(
                 "cd ../frontend && npm install --legacy-peer-deps && npm run build:skip-typescript",
                 shell=True,
@@ -114,24 +56,15 @@ class FrontendStack(Stack):
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             enforce_ssl=True,
         )
-        
-        # Add direct resource suppression for S3 bucket
-        NagSuppressions.add_resource_suppressions(
-            webapp_bucket,
-            [{
-                "id": "AwsSolutions-S1",
-                "reason": "For prototyping purposes we chose not to log access to bucket"
-            }]
-        )
-        
+
         # Deploy the built frontend to S3
         bucket_deployment = s3_deploy.BucketDeployment(
             self, "DeployFrontend",
             sources=[s3_deploy.Source.asset("../frontend/dist")],
             destination_bucket=webapp_bucket,
         )
-        
-        # Create a Lambda function to update config.js with actual backend values
+
+        # Create Lambda function with latest runtime
         config_lambda = lambda_.Function(
             self, "ConfigUpdateLambda",
             runtime=lambda_.Runtime.NODEJS_20_X,
@@ -144,45 +77,13 @@ class FrontendStack(Stack):
             }
         )
 
-        # Add direct resource suppression for Lambda
-        NagSuppressions.add_resource_suppressions(
-            config_lambda,
-            [{
-                "id": "AwsSolutions-L1",
-                "reason": "Using the latest available runtime for Lambda function"
-            }]
-        )
-        
-        # Add direct resource suppression for Lambda role
-        NagSuppressions.add_resource_suppressions(
-            config_lambda.role,
-            [{
-                "id": "AwsSolutions-IAM4",
-                "reason": "The Lambda function needs basic execution role permissions"
-            }]
-        )
-        
-        # Add direct resource suppression for Lambda role policy
-        if hasattr(config_lambda.role, "default_policy"):
-            NagSuppressions.add_resource_suppressions(
-                config_lambda.role.default_policy,
-                [{
-                    "id": "AwsSolutions-IAM5",
-                    "reason": "The Lambda function requires permissions to write to the S3 bucket"
-                }]
-            )
-        
-        # Grant the Lambda function permissions to read/write to the S3 bucket
-        webapp_bucket.grant_read_write(config_lambda)
-
-        # Create a custom resource provider
+        # Create custom resource provider
         provider = cr.Provider(
             self, "ConfigUpdateProvider",
-            on_event_handler=config_lambda,
-            log_retention=None
+            on_event_handler=config_lambda
         )
 
-        # Create a custom resource to trigger the Lambda function
+        # Create custom resource
         config_custom_resource = CustomResource(
             self, "ConfigUpdateResource",
             service_token=provider.service_token,
@@ -193,97 +94,67 @@ class FrontendStack(Stack):
                 "CognitoUserPoolId": cognito_user_pool_id,
                 "CognitoUserPoolClientId": cognito_user_pool_client_id,
                 "CognitoIdentityPoolId": cognito_identity_pool_id,
-                "BuildTimestamp": time.time()  # Force update on each deployment
+                "BuildTimestamp": time.time()
             }
         )
-        
-        # Ensure the custom resource runs after the bucket deployment completes
         config_custom_resource.node.add_dependency(bucket_deployment)
 
-        # Create WAF Web ACL
-        web_acl = wafv2.CfnWebACL(
-            self, "WebACL",
-            name="WebACLTest",
-            description="WAF rules for CloudFront",
-            scope="CLOUDFRONT",
-            default_action={
-                "allow": {}
-            },
-            visibility_config={
-                "cloudWatchMetricsEnabled": True,
-                "metricName": "WebACLMetric",
-                "sampledRequestsEnabled": True
-            },
-            rules=[
-                wafv2.CfnWebACL.RuleProperty(
-                    name="AWSManagedRules",
-                    priority=0,
-                    override_action={
-                        "none": {}
-                    },
-                    statement={
-                        "managedRuleGroupStatement": {
-                            "vendorName": "AWS",
-                            "name": "AWSManagedRulesCommonRuleSet",
-                            "excludedRules": []
-                        }
-                    },
-                    visibility_config={
-                        "sampledRequestsEnabled": True,
-                        "cloudWatchMetricsEnabled": True,
-                        "metricName": "AWSManagedRulesMetric"
-                    }
-                )
-            ]
-        )
-
-        # Create Origin Access Control
-        origin_access_control = cloudfront.CfnOriginAccessControl(
-            self, "WebappOriginAccessControl",
-            origin_access_control_config=cloudfront.CfnOriginAccessControl.OriginAccessControlConfigProperty(
-                name="WebappOAC",
-                origin_access_control_origin_type="s3",
-                signing_behavior="always",
-                signing_protocol="sigv4"
-            )
-        )
-
-        # Create CloudFront distribution with OAC
-        distribution = cloudfront.Distribution(self, "Distribution",
+        # Create CloudFront distribution
+        distribution = cloudfront.Distribution(
+            self, "Distribution",
             default_behavior=cloudfront.BehaviorOptions(
-                origin=origins.S3BucketOrigin.with_origin_access_control(
-                    webapp_bucket,
-                    origin_access_levels=[cloudfront.AccessLevel.READ]
-                ),
+                origin=origins.S3BucketOrigin(webapp_bucket),
                 viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
                 cache_policy=cloudfront.CachePolicy.CACHING_OPTIMIZED
             ),
-            default_root_object="index.html",
-            web_acl_id=web_acl.attr_arn
+            default_root_object="index.html"
         )
-        
-        # Add direct resource suppressions for CloudFront distribution
-        NagSuppressions.add_resource_suppressions(
-            distribution,
-            [
-                {
-                    "id": "AwsSolutions-CFR1",
-                    "reason": "Geo restrictions not required for this demo"
-                },
-                {
-                    "id": "AwsSolutions-CFR3",
-                    "reason": "Access logging not required for this demo"
-                },
-                {
-                    "id": "AwsSolutions-CFR4",
-                    "reason": "Using default TLS settings for this demo"
-                }
-            ]
-        )
-        
+
+        # --------------------------
+        # cdk-nag Suppressions
+        # --------------------------
+        NagSuppressions.add_stack_suppressions(self, [
+            {
+                "id": "AwsSolutions-IAM5",
+                "reason": "CDK-generated deployment role requires asset bucket access",
+                "appliesTo": [
+                    f"Resource::arn:aws:s3:::cdk-*-{self.account}-{self.region}/*",
+                    f"Resource::{webapp_bucket.bucket_arn}/*",
+                    "Resource::*Custom::CDKBucketDeployment*",
+                    "Resource::*framework-onEvent*"
+                ]
+            },
+            {
+                "id": "AwsSolutions-L1",
+                "reason": "CDK-managed Lambda functions use pinned runtimes",
+                "appliesTo": [
+                    "Resource::*Custom::CDKBucketDeployment*",
+                    "Resource::*framework-onEvent*"
+                ]
+            }
+        ])
+
+        # Resource-specific suppressions
+        NagSuppressions.add_resource_suppressions(webapp_bucket, [
+            {"id": "AwsSolutions-S1", "reason": "Prototype bucket doesn't require access logging"}
+        ])
+
+        NagSuppressions.add_resource_suppressions(config_lambda.role, [
+            {
+                "id": "AwsSolutions-IAM5", 
+                "reason": "Requires write access to specific S3 paths",
+                "appliesTo": [f"Resource::{webapp_bucket.bucket_arn}/*"]
+            }
+        ])
+
+        NagSuppressions.add_resource_suppressions(provider.on_event_handler.role, [
+            {
+                "id": "AwsSolutions-IAM5",
+                "reason": "CDK custom resource requires Lambda invocation",
+                "appliesTo": ["Resource::*"]
+            }
+        ])
+
+        # Outputs
         self.frontend_url = f"https://{distribution.distribution_domain_name}"
-        # Output CloudFront URL
-        CfnOutput(
-            self, "FrontendUrl",
-            value=f"https://{distribution.distribution_domain_name}"
-        )
+        CfnOutput(self, "FrontendUrl", value=self.frontend_url)
