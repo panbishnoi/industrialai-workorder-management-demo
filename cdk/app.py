@@ -12,113 +12,36 @@ from aws_cdk import (
     CfnOutput
 )
 from constructs import Construct
-from cdk_nag import AwsSolutionsChecks
+from cdk_nag import AwsSolutionsChecks, NagSuppressions, NagPackSuppression
 
-from backend import BackendStack
+# Import nested stack classes directly from their respective modules
 from bedrock_agents import BedrockAgentsStack
+from backend import BackendStack
 from webappstack import FrontendStack
-
-class BedrockAgentsNestedStack(NestedStack):
-    """Nested stack version of BedrockAgentsStack"""
-    def __init__(
-        self,
-        scope: Construct,
-        construct_id: str,
-        collaborator_foundation_model: str,
-        supervisor_foundation_model: str,
-        openweather_api_key: str,
-        **kwargs
-    ) -> None:
-        super().__init__(scope, construct_id, **kwargs)
-        
-        # Create the BedrockAgentsStack within this nested stack
-        # We're using composition instead of inheritance to avoid multiple inheritance issues
-        self.bedrock_stack = BedrockAgentsStack(
-            self,
-            "Stack",  # Use a different construct_id for the inner stack
-            collaborator_foundation_model=collaborator_foundation_model,
-            supervisor_foundation_model=supervisor_foundation_model,
-            openweather_api_key=openweather_api_key
-        )
-        
-        # Expose the properties needed by other stacks
-        self.work_orders_table_name = self.bedrock_stack.work_orders_table_name
-        self.locations_table_name = self.bedrock_stack.locations_table_name
-        self.supervisor_agent_id = self.bedrock_stack.supervisor_agent_id
-        self.supervisor_agent_alias_id = self.bedrock_stack.supervisor_agent_alias_id
-
-class BackendNestedStack(NestedStack):
-    """Nested stack version of BackendStack"""
-    def __init__(
-        self,
-        scope: Construct,
-        construct_id: str,
-        language_code: str,
-        agent_id: str,
-        agent_alias_id: str,
-        work_order_table_name: str,
-        location_table_name: str,
-        **kwargs
-    ) -> None:
-        super().__init__(scope, construct_id, **kwargs)
-        
-        # Create the BackendStack within this nested stack
-        # Using composition instead of inheritance
-        self.backend_stack = BackendStack(
-            self,
-            "Stack",  # Use a different construct_id for the inner stack
-            language_code=language_code,
-            agent_id=agent_id,
-            agent_alias_id=agent_alias_id,
-            work_order_table_name=work_order_table_name,
-            location_table_name=location_table_name
-        )
-        
-        # Expose the properties needed by the frontend stack
-        self.api_endpoint = self.backend_stack.api_endpoint
-        self.workorder_api_endpoint = self.backend_stack.workorder_api_endpoint
-        self.region_name = self.backend_stack.region_name
-        self.user_pool_id = self.backend_stack.user_pool_id
-        self.user_pool_client_id = self.backend_stack.user_pool_client_id
-        self.identity_pool_id = self.backend_stack.identity_pool_id
-
-class FrontendNestedStack(NestedStack):
-    """Nested stack version of FrontendStack"""
-    def __init__(
-        self,
-        scope: Construct,
-        construct_id: str,
-        api_endpoint: str,
-        workorder_api_endpoint: str,
-        region_name: str,
-        cognito_user_pool_id: str,
-        cognito_user_pool_client_id: str,
-        cognito_identity_pool_id: str,
-        **kwargs
-    ) -> None:
-        super().__init__(scope, construct_id, **kwargs)
-        
-        # Create the FrontendStack within this nested stack
-        # Using composition instead of inheritance
-        self.frontend_stack = FrontendStack(
-            self,
-            "Stack",  # Use a different construct_id for the inner stack
-            api_endpoint=api_endpoint,
-            workorder_api_endpoint=workorder_api_endpoint,
-            region_name=region_name,
-            cognito_user_pool_id=cognito_user_pool_id,
-            cognito_user_pool_client_id=cognito_user_pool_client_id,
-            cognito_identity_pool_id=cognito_identity_pool_id
-        )
-        
-        # Expose frontend URL for parent stack output
-        self.frontend_url = self.frontend_stack.frontend_url
 
 class FieldWorkforceSafetyParentStack(Stack):
     """Parent stack that contains all nested stacks"""
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
+        # Add stack-level NAG suppressions for common patterns
+        NagSuppressions.add_stack_suppressions(
+            self,
+            [
+                NagPackSuppression(
+                    id="AwsSolutions-IAM5",
+                    reason="Custom resources and CDK constructs require certain IAM permissions with wildcards"
+                ),
+                NagPackSuppression(
+                    id="AwsSolutions-IAM4",
+                    reason="Using AWS managed policies is acceptable for this demo application"
+                ),
+                NagPackSuppression(
+                    id="AwsSolutions-L1",
+                    reason="CDK BucketDeployment construct uses a Lambda function with a runtime managed by CDK that we cannot directly control"
+                ),
+            ]
+        )
 
         # Get configuration parameters from context
         deploy_frontend = self.node.try_get_context("deploy_frontend")
@@ -127,6 +50,8 @@ class FieldWorkforceSafetyParentStack(Stack):
 
         # Get configuration parameters from context
         openweather_api_key = self.node.try_get_context("openweather_api_key")
+        if openweather_api_key is None:
+            openweather_api_key = "dummy_key"  # Provide a default value
 
         # Get foundation model parameters from context
         collaborator_foundation_model = self.node.try_get_context("collaborator_foundation_model")
@@ -141,7 +66,7 @@ class FieldWorkforceSafetyParentStack(Stack):
         language_code = "en"
 
         # Deploy Bedrock Agents nested stack (always deployed)
-        bedrock_agents_stack = BedrockAgentsNestedStack(
+        bedrock_agents_stack = BedrockAgentsStack(
             self,
             "BedrockAgentStack",
             collaborator_foundation_model=collaborator_foundation_model,
@@ -152,7 +77,7 @@ class FieldWorkforceSafetyParentStack(Stack):
         # Conditionally deploy Backend and Frontend stacks based on the single parameter
         if deploy_frontend.lower() == "yes":
             # Deploy Backend stack
-            backend_stack = BackendNestedStack(
+            backend_stack = BackendStack(
                 self,
                 "BackendAPIStack",
                 language_code=language_code,
@@ -165,7 +90,7 @@ class FieldWorkforceSafetyParentStack(Stack):
             backend_stack.add_dependency(bedrock_agents_stack)
 
             # Deploy Frontend stack
-            frontend_stack = FrontendNestedStack(
+            frontend_stack = FrontendStack(
                 self,
                 "FrontendStack",
                 api_endpoint=backend_stack.api_endpoint,

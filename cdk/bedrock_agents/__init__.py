@@ -1,6 +1,7 @@
 import os
 from aws_cdk import (
     Stack,
+    NestedStack,
     aws_iam as iam,
     aws_lambda as lambda_,
     aws_s3 as s3,
@@ -17,7 +18,8 @@ from constructs import Construct
 from cdk_nag import NagSuppressions, NagPackSuppression
 
 
-class BedrockAgentsStack(Stack):
+class BedrockAgentsStack(NestedStack):
+    """Nested stack for Bedrock Agents functionality"""
     def __init__(
         self,
         scope: Construct,
@@ -27,6 +29,7 @@ class BedrockAgentsStack(Stack):
         openweather_api_key: str,
         **kwargs
     ) -> None:
+        
         super().__init__(scope, construct_id, **kwargs)
         
         # Add stack-level NAG suppressions for common patterns
@@ -51,7 +54,7 @@ class BedrockAgentsStack(Stack):
         # Create S3 Bucket for CSV files
         data_bucket = s3.Bucket(
             self,
-            f"{self.stack_name}-DataBucket",
+            "DataBucket",
             versioned=True,
             encryption=s3.BucketEncryption.S3_MANAGED,
             removal_policy=RemovalPolicy.DESTROY,
@@ -74,7 +77,7 @@ class BedrockAgentsStack(Stack):
         # Deploy CSV files from local data directory to S3 bucket
         data_deployment = s3deploy.BucketDeployment(
              self,
-             f"{self.stack_name}-DeployCSVFiles",
+             "DeployCSVFiles",
              sources=[s3deploy.Source.asset("../data", exclude=["**/*", "!**/*.csv"])],
              destination_bucket=data_bucket,
              log_retention=logs.RetentionDays.ONE_WEEK,
@@ -96,7 +99,7 @@ class BedrockAgentsStack(Stack):
         # Create DynamoDB Tables
         work_orders_table = dynamodb.Table(
             self,
-            f"{self.stack_name}-WorkOrdersTable",
+            "WorkOrdersTable",
             table_name=f"{construct_id.lower()}-work-orders",
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
             partition_key=dynamodb.Attribute(
@@ -117,7 +120,7 @@ class BedrockAgentsStack(Stack):
 
         locations_table = dynamodb.Table(
             self,
-            f"{self.stack_name}-LocationsTable",
+            "LocationsTable",
             table_name=f"{construct_id.lower()}-locations",
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
             partition_key=dynamodb.Attribute(
@@ -129,7 +132,7 @@ class BedrockAgentsStack(Stack):
 
         hazards_table = dynamodb.Table(
             self,
-            f"{self.stack_name}-HazardsTable",
+            "HazardsTable",
             table_name=f"{construct_id.lower()}-hazards",
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
             partition_key=dynamodb.Attribute(
@@ -150,7 +153,7 @@ class BedrockAgentsStack(Stack):
 
         incidents_table = dynamodb.Table(
             self,
-            f"{self.stack_name}-IncidentsTable",
+            "IncidentsTable",
             table_name=f"{construct_id.lower()}-incidents",
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
             partition_key=dynamodb.Attribute(
@@ -171,7 +174,7 @@ class BedrockAgentsStack(Stack):
 
         control_measures_table = dynamodb.Table(
             self,
-            f"{self.stack_name}-ControlMeasuresTable",
+            "ControlMeasuresTable",
             table_name=f"{construct_id.lower()}-control-measures",
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
             partition_key=dynamodb.Attribute(
@@ -192,7 +195,7 @@ class BedrockAgentsStack(Stack):
 
         assets_table = dynamodb.Table(
             self,
-            f"{self.stack_name}-AssetsTable",
+            "AssetsTable",
             table_name=f"{construct_id.lower()}-assets",
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
             partition_key=dynamodb.Attribute(
@@ -213,7 +216,7 @@ class BedrockAgentsStack(Stack):
 
         location_hazards_table = dynamodb.Table(
             self,
-            f"{self.stack_name}-LocationHazardsTable",
+            "LocationHazardsTable",
             table_name=f"{construct_id.lower()}-location-hazards",
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
             partition_key=dynamodb.Attribute(
@@ -239,7 +242,7 @@ class BedrockAgentsStack(Stack):
         # Create Lambda execution role
         lambda_execution_role = iam.Role(
             self,
-            f"{self.stack_name}-LambdaExecutionRole",
+            "LambdaExecutionRole",
             assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
             managed_policies=[
                 iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSLambdaBasicExecutionRole")
@@ -326,7 +329,7 @@ class BedrockAgentsStack(Stack):
         # Create Data Import Lambda Function
         data_import_function = lambda_.Function(
             self,
-            f"{self.stack_name}-DataImportFunction",
+            "DataImportFunction",
             function_name=f"{construct_id.lower()}-data-import",
             runtime=lambda_.Runtime.PYTHON_3_13,  # Updated to latest Python runtime
             handler="index.handler",
@@ -359,7 +362,7 @@ class BedrockAgentsStack(Stack):
         # Create a simple custom resource to trigger the data import function after deployment
         data_import_trigger = CustomResource(
             self,
-            f"{self.stack_name}-DataImportTrigger",
+            "DataImportTrigger",
             service_token=data_import_function.function_arn,
         )
         
@@ -376,7 +379,7 @@ class BedrockAgentsStack(Stack):
         # Create Weather Agent Lambda Function
         weather_agent_function = lambda_.Function(
             self,
-            f"{self.stack_name}-WeatherAgentFunction",
+            "WeatherAgentFunction",
             function_name=f"{construct_id.lower()}-weather-agent",
             runtime=lambda_.Runtime.PYTHON_3_13,  # Updated to latest Python runtime
             handler="index.lambda_handler",
@@ -404,7 +407,7 @@ class BedrockAgentsStack(Stack):
         # Create Location Alert Lambda Function
         location_alert_function = lambda_.Function(
             self,
-            f"{self.stack_name}-LocationAlertFunction",
+            "LocationAlertFunction",
             function_name=f"{construct_id.lower()}-location-alert",
             runtime=lambda_.Runtime.PYTHON_3_13,  # Updated to latest Python runtime
             handler="index.lambda_handler",
@@ -437,7 +440,7 @@ class BedrockAgentsStack(Stack):
         # Create Emergency Alert Lambda Function
         emergency_alert_function = lambda_.Function(
             self,
-            f"{self.stack_name}-EmergencyAlertFunction",
+            "EmergencyAlertFunction",
             function_name=f"{construct_id.lower()}-emergency-alert",
             runtime=lambda_.Runtime.PYTHON_3_13,  # Updated to latest Python runtime
             handler="index.lambda_handler",
@@ -464,7 +467,7 @@ class BedrockAgentsStack(Stack):
         # Create Weather Agent IAM Role
         weather_agent_role = iam.Role(
             self,
-            f"{self.stack_name}-WeatherBedrockAgentExecutionRole",
+            "WeatherBedrockAgentExecutionRole",
             assumed_by=iam.ServicePrincipal("bedrock.amazonaws.com"),
             description='Execution role for Weather Bedrock Agent'
         )
@@ -492,7 +495,7 @@ class BedrockAgentsStack(Stack):
         # Create Location Alert Agent IAM Role
         location_alert_agent_role = iam.Role(
             self,
-            f"{self.stack_name}-LocationAlertBedrockAgentExecutionRole",
+            "LocationAlertBedrockAgentExecutionRole",
             assumed_by=iam.ServicePrincipal("bedrock.amazonaws.com"),
             description='Execution role for Location Alert Bedrock Agent'
         )

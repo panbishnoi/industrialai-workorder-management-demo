@@ -4,6 +4,7 @@
 
 from aws_cdk import (
     Stack,
+    NestedStack,
     CfnOutput,
     aws_dynamodb as dynamodb,
     aws_iam as iam,
@@ -20,8 +21,8 @@ from vicemergencyflow import VicEmergencyStack
 EMBEDDINGS_SIZE = 512
 
 
-class BackendStack(Stack):
-
+class BackendStack(NestedStack):
+    """Nested stack for Backend functionality"""
     def __init__(
         self,
         scope: Construct,
@@ -31,7 +32,7 @@ class BackendStack(Stack):
         work_order_table_name:  str,
         location_table_name: str,
         language_code: str = "en",
-        **kwargs,
+        **kwargs
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 

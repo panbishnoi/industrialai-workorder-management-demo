@@ -7,6 +7,7 @@ import subprocess
 import time
 from aws_cdk import (
     Stack,
+    NestedStack,
     CfnOutput,
     RemovalPolicy,
     aws_s3 as s3,
@@ -23,7 +24,8 @@ from aws_cdk import (
 from constructs import Construct
 from cdk_nag import NagSuppressions,NagPackSuppression
 
-class FrontendStack(Stack):
+class FrontendStack(NestedStack):
+    """Nested stack for Frontend functionality"""
     def __init__(self, scope: Construct, id: str, 
                  api_endpoint: str,
                  workorder_api_endpoint: str,
@@ -34,7 +36,7 @@ class FrontendStack(Stack):
                  **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
-        # Add stack-level NAG suppressions for common patterns
+        # Add stack NAG suppressions for common patterns
         NagSuppressions.add_stack_suppressions(
             self,
             [
