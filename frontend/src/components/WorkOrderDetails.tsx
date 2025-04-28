@@ -253,7 +253,7 @@ const WorkOrderDetails = () => {
         {error && <div className="safety-check-response">{error}</div>}
         {loading ? (
           <div className="safety-check-response">
-            <p>Performing fresh safety check...</p>
+            <p>Performing workorder safety check...</p>
           </div>
         ) : 
         (workOrder.safetycheckresponse) && (

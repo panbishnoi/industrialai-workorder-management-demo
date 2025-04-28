@@ -3,7 +3,7 @@ import csv
 import json
 import os
 import io
-from datetime import datetime
+from datetime import datetime, timedelta
 import cfnresponse
 
 dynamodb = boto3.resource('dynamodb')
@@ -19,6 +19,54 @@ def read_csv_from_s3(bucket_name, key):
     except Exception as e:
         print(f"Error reading {key} from S3: {str(e)}")
         return None
+        
+def update_work_order_dates(items):
+    """
+    Update work order dates to be 2 days in the future from the current date.
+    This ensures work orders are always scheduled for future dates.
+    """
+    if not items:
+        return items
+        
+    # Calculate the date 2 days from now
+    future_date = datetime.now() + timedelta(days=2)
+    
+    for item in items:
+        if 'scheduled_start_timestamp' in item:
+            # Parse the original timestamp to keep the time portion
+            original_dt = datetime.fromisoformat(item['scheduled_start_timestamp'].replace('Z', '+00:00'))
+            
+            # Create a new datetime with future date but same time
+            new_dt = datetime(
+                year=future_date.year,
+                month=future_date.month,
+                day=future_date.day,
+                hour=original_dt.hour,
+                minute=original_dt.minute,
+                second=original_dt.second
+            )
+            
+            # Update the timestamp
+            item['scheduled_start_timestamp'] = new_dt.isoformat()
+            
+        if 'scheduled_finish_timestamp' in item:
+            # Parse the original timestamp to keep the time portion
+            original_dt = datetime.fromisoformat(item['scheduled_finish_timestamp'].replace('Z', '+00:00'))
+            
+            # Create a new datetime with future date but same time
+            new_dt = datetime(
+                year=future_date.year,
+                month=future_date.month,
+                day=future_date.day,
+                hour=original_dt.hour,
+                minute=original_dt.minute,
+                second=original_dt.second
+            )
+            
+            # Update the timestamp
+            item['scheduled_finish_timestamp'] = new_dt.isoformat()
+    
+    return items
 
 def batch_write_items(table, items):
     with table.batch_writer() as batch:
@@ -58,6 +106,10 @@ def handler(event, context):
         for table_name, file_name in csv_files.items():
             items = read_csv_from_s3(s3_bucket, file_name)
             if items:
+                # Update work order dates if this is the work_orders table
+                if table_name == 'work_orders':
+                    items = update_work_order_dates(items)
+                    
                 table = get_table(table_name.upper())
                 batch_write_items(table, items)
                 results[table_name] = len(items)
