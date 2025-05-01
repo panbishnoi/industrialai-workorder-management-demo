@@ -5,7 +5,6 @@ import 'leaflet/dist/leaflet.css';
 import { postSafetyCheckRequest, pollSafetyCheckStatus, postEmergencyCheckRequest } from '@lib/api';
 import { customAlphabet } from "nanoid";
 import UnifiedMap from '@components/UnifiedMap';
-import emergencyData from '@/emergencydata.json'; 
 import { Emergency } from '@/types/emergency';
 import {
   Container,
@@ -61,7 +60,7 @@ const WorkOrderDetails = () => {
     try {
       setLoading(true);
       const queryObject = {
-        query: "Perform hazard safety and weather safety checks for WorkOrder::",
+        query: "Perform work order safety checks for WorkOrder::",
         workorderdetails: {
           work_order_id: workOrder.work_order_id,
           workOrderLocationAssetDetails: workOrder,
@@ -110,11 +109,9 @@ const WorkOrderDetails = () => {
     try {
       const result = (await pollSafetyCheckStatus(requestId) as unknown) as SafetyCheckResponse;
       if (result?.status === 'COMPLETED') {
-
-        workOrder.safetycheckresponse = result.safetycheckresponse
-
-        setEmergencies(emergencyData as Emergency[]);
+        workOrder.safetycheckresponse = result.safetycheckresponse;
         setLoading(false);
+        setError(null); // Clear any previous errors when successful
         return true;
       }
       return false;
@@ -250,13 +247,13 @@ const WorkOrderDetails = () => {
 
       {/* Collapsible Location Section */}
 
-        {error && <div className="safety-check-response">{error}</div>}
         {loading ? (
           <div className="safety-check-response">
-            <p>Performing workorder safety check...</p>
+            <p>Performing Work Order Safety Check...</p>
           </div>
-        ) : 
-        (workOrder.safetycheckresponse) && (
+        ) : error ? (
+          <div className="safety-check-response">{error}</div>
+        ) : workOrder.safetycheckresponse && (
           <div className="safety-check-response" 
             dangerouslySetInnerHTML={{ __html:
               workOrder.safetycheckresponse.replace(/^"|"$/g, '') // Remove leading and trailing quotes

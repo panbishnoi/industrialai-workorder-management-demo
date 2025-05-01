@@ -20,10 +20,12 @@ from aws_cdk import (
     CustomResource,
     Duration,
     custom_resources as cr,
+    aws_logs as logs,
 )
 from constructs import Construct
 from cdk_nag import NagSuppressions,NagPackSuppression
 
+import re
 class FrontendStack(NestedStack):
     """Nested stack for Frontend functionality"""
     def __init__(self, scope: Construct, id: str, 
@@ -100,9 +102,23 @@ class FrontendStack(NestedStack):
         )
  
         
+        # Define function name first - use the stack ID to ensure uniqueness
+
+        function_name = f"{id.lower()}-config-update"
+        
+        # Create explicit log group for config lambda function
+        config_lambda_log_group = logs.LogGroup(
+            self,
+            "ConfigLambdaLogGroup",
+            log_group_name=f"/aws/lambda/{function_name}",
+            retention=logs.RetentionDays.ONE_WEEK,
+            removal_policy=RemovalPolicy.DESTROY
+        )
+        
         # Create a Lambda function to update config.js with actual backend values
         config_lambda = lambda_.Function(
             self, "ConfigUpdateLambda",
+            function_name=function_name,
             runtime=lambda_.Runtime.NODEJS_20_X,
             handler="index.handler",
             timeout=Duration.minutes(5),

@@ -11,6 +11,7 @@ from aws_cdk import (
     aws_logs as logs,
     aws_lambda,
     aws_wafv2 as waf,
+    RemovalPolicy,
 )
 from constructs import Construct
 from cdk_nag import NagSuppressions, NagPackSuppression
@@ -34,12 +35,19 @@ class CoreApiGateway(Construct):
             cognito_user_pools=[user_pool],
         )
 
-        self.log_group = logs.LogGroup(self, "LogGroup")
+        self.log_group = logs.LogGroup(
+            self, 
+            "LogGroup",
+            log_group_name=f"/aws/apigateway/{construct_id}",
+            retention=logs.RetentionDays.ONE_WEEK,
+            removal_policy=RemovalPolicy.DESTROY
+        )
 
         self.rest_api = apigateway.RestApi(
             self,
             "RestApi",
             cloud_watch_role=True,
+            cloud_watch_role_removal_policy=RemovalPolicy.DESTROY,
             default_cors_preflight_options=apigateway.CorsOptions(
                 allow_origins=apigateway.Cors.ALL_ORIGINS,
                 allow_methods=apigateway.Cors.ALL_METHODS,

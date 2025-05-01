@@ -13,10 +13,10 @@ from aws_cdk import (
 from constructs import Construct
 
 import core_constructs as coreconstructs
-from safetycheckrequestflow import SafetyCheckRequestStack
-from workorderlistflow import WorkOrderApiStack
-from safetycheckprocessorflow import SafetyCheckProcessorStack
-from vicemergencyflow import VicEmergencyStack
+from .safetycheckrequestflow import SafetyCheckRequestStack
+from .workorderlistflow import WorkOrderApiStack
+from .safetycheckprocessorflow import SafetyCheckProcessorStack
+from .vicemergencyflow import VicEmergencyStack
 
 EMBEDDINGS_SIZE = 512
 

@@ -9,11 +9,11 @@ from aws_cdk import (
     Names,
     Duration,
     RemovalPolicy,
-    aws_dynamodb as dynamodb
+    aws_dynamodb as dynamodb,
+    aws_logs as logs
 )
 from constructs import Construct
 from cdk_nag import NagSuppressions, NagPackSuppression
-
 import core_constructs as core
 
 
@@ -28,10 +28,23 @@ class SafetyCheckRequestStack(Construct):
     ) -> None:
         super().__init__(scope, construct_id)
 
+        # Define function name first
+        function_name = f"{construct_id.lower()}-workorder-request"
+        
+        # Create explicit log group for safety check request function
+        safet_check_request_log_group = logs.LogGroup(
+            self,
+            "SafetyCheckRequestLogGroup",
+            log_group_name=f"/aws/lambda/{function_name}",
+            retention=logs.RetentionDays.ONE_WEEK,
+            removal_policy=RemovalPolicy.DESTROY
+        )
+        
         # a lambda function process the customer's question
         safet_check_request_fn = lambda_python.PythonFunction(
             self,
             "WorkOrderRequest",
+            function_name=function_name,
             entry=f"{os.path.dirname(os.path.realpath(__file__))}/safetycheckrequest",
             index="index.py",
             handler="lambda_handler",
@@ -44,6 +57,7 @@ class SafetyCheckRequestStack(Construct):
                 "work_order_requests_table": work_order_requests_table.table_name,
             },
         )
+
 
         work_order_requests_table.grant_read_write_data(safet_check_request_fn)
 
@@ -75,11 +89,23 @@ class SafetyCheckRequestStack(Construct):
             True,
         )
 
+        # Define function name first
+        polling_function_name = f"{construct_id.lower()}-safety_check_polling"
+        
+        # Create explicit log group for safety check request function
+        safet_check_polling_log_group = logs.LogGroup(
+            self,
+            "SafetyCheckPollingLogGroup",
+            log_group_name=f"/aws/lambda/{polling_function_name}",
+            retention=logs.RetentionDays.ONE_WEEK,
+            removal_policy=RemovalPolicy.DESTROY
+        )
 
         # a lambda function to support polling request and provide final response
         safet_check_polling_fn = lambda_python.PythonFunction(
             self,
             "WorkOrderPolling",
+            function_name=polling_function_name,
             entry=f"{os.path.dirname(os.path.realpath(__file__))}/safetycheckpolling",
             index="index.py",
             handler="lambda_handler",
@@ -92,6 +118,7 @@ class SafetyCheckRequestStack(Construct):
                 "work_order_requests_table": work_order_requests_table.table_name,
             },
         )
+
 
         work_order_requests_table.grant_read_write_data(safet_check_polling_fn)
 

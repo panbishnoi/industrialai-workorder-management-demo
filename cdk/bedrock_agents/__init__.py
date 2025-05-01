@@ -326,11 +326,23 @@ class BedrockAgentsStack(NestedStack):
             )
         )
 
+        # Define function name first - use the exact name that appears in AWS
+        function_name = f"{construct_id.lower()}-data-import"
+        
+        # Create explicit log group for data import function with the exact name
+        data_import_log_group = logs.LogGroup(
+            self,
+            "DataImportLogGroup",
+            log_group_name=f"/aws/lambda/{function_name}",
+            retention=logs.RetentionDays.ONE_WEEK,
+            removal_policy=RemovalPolicy.DESTROY
+        )
+        
         # Create Data Import Lambda Function
         data_import_function = lambda_.Function(
             self,
             "DataImportFunction",
-            function_name=f"{construct_id.lower()}-data-import",
+            function_name=function_name,  # Ensure the function name matches exactly
             runtime=lambda_.Runtime.PYTHON_3_13,  # Updated to latest Python runtime
             handler="index.handler",
             code=lambda_.Code.from_asset("./bedrock_agents/data_import"),
@@ -348,6 +360,7 @@ class BedrockAgentsStack(NestedStack):
                 "CONTROL_MEASURES_TABLE_NAME": control_measures_table.table_name
             }
         )
+        
         # Add NAG suppression for Lambda runtime
         NagSuppressions.add_resource_suppressions(
             data_import_function,
@@ -376,6 +389,15 @@ class BedrockAgentsStack(NestedStack):
         data_import_trigger.node.add_dependency(location_hazards_table)
         data_import_trigger.node.add_dependency(control_measures_table)
 
+        # Create explicit log group for weather agent function
+        weather_agent_log_group = logs.LogGroup(
+            self,
+            "WeatherAgentLogGroup",
+            log_group_name=f"/aws/lambda/{construct_id.lower()}-weather-agent",
+            retention=logs.RetentionDays.ONE_WEEK,
+            removal_policy=RemovalPolicy.DESTROY
+        )
+        
         # Create Weather Agent Lambda Function
         weather_agent_function = lambda_.Function(
             self,
@@ -402,6 +424,15 @@ class BedrockAgentsStack(NestedStack):
                     reason="Using the latest Python runtime version 3.13"
                 )
             ]
+        )
+        
+        # Create explicit log group for location alert function
+        location_alert_log_group = logs.LogGroup(
+            self,
+            "LocationAlertLogGroup",
+            log_group_name=f"/aws/lambda/{construct_id.lower()}-location-alert",
+            retention=logs.RetentionDays.ONE_WEEK,
+            removal_policy=RemovalPolicy.DESTROY
         )
         
         # Create Location Alert Lambda Function
@@ -435,6 +466,15 @@ class BedrockAgentsStack(NestedStack):
                     reason="Using the latest Python runtime version 3.13"
                 )
             ]
+        )
+        
+        # Create explicit log group for emergency alert function
+        emergency_alert_log_group = logs.LogGroup(
+            self,
+            "EmergencyAlertLogGroup",
+            log_group_name=f"/aws/lambda/{construct_id.lower()}-emergency-alert",
+            retention=logs.RetentionDays.ONE_WEEK,
+            removal_policy=RemovalPolicy.DESTROY
         )
         
         # Create Emergency Alert Lambda Function
@@ -472,18 +512,43 @@ class BedrockAgentsStack(NestedStack):
             description='Execution role for Weather Bedrock Agent'
         )
         
-        # Add permissions for Weather agent to invoke Lambda function
+        # Add permissions for Weather agent to invoke Lambda function and use inference profiles
         weather_agent_role.add_to_policy(
             iam.PolicyStatement(
+                sid="AmazonBedrockAgentInferencProfilePolicy1",
                 effect=iam.Effect.ALLOW,
                 actions=[
-                    "bedrock:InvokeModel",
-                    "bedrock:GetFoundationModel"
+                    "bedrock:InvokeModel*",
+                    "bedrock:CreateInferenceProfile"
                 ],
-                resources=["*"]
+                resources=[
+                    "arn:aws:bedrock:*::foundation-model/*",
+                    "arn:aws:bedrock:*:*:inference-profile/*",
+                    "arn:aws:bedrock:*:*:application-inference-profile/*"
+                ]
             )
         )
-        
+
+        weather_agent_role.add_to_policy(
+            iam.PolicyStatement(
+                sid="AmazonBedrockAgentInferencProfilePolicy2",
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    "bedrock:GetInferenceProfile",
+                    "bedrock:ListInferenceProfiles",
+                    "bedrock:DeleteInferenceProfile",
+                    "bedrock:TagResource",
+                    "bedrock:UntagResource",
+                    "bedrock:ListTagsForResource",
+                ],
+                resources=[
+                    "arn:aws:bedrock:*:*:inference-profile/*",
+                    "arn:aws:bedrock:*:*:application-inference-profile/*"
+                ]
+            )
+        )
+
+
         weather_agent_role.add_to_policy(
             iam.PolicyStatement(
                 effect=iam.Effect.ALLOW,
@@ -500,18 +565,42 @@ class BedrockAgentsStack(NestedStack):
             description='Execution role for Location Alert Bedrock Agent'
         )
         
-        # Add permissions for Location Alert agent to invoke Lambda function
+        # Add permissions for Location Alert agent to invoke Lambda function and use inference profiles
         location_alert_agent_role.add_to_policy(
             iam.PolicyStatement(
+                sid="AmazonBedrockAgentInferencProfilePolicy1",
                 effect=iam.Effect.ALLOW,
                 actions=[
-                    "bedrock:InvokeModel",
-                    "bedrock:GetFoundationModel"
+                    "bedrock:InvokeModel*",
+                    "bedrock:CreateInferenceProfile"
                 ],
-                resources=["*"]
+                resources=[
+                    "arn:aws:bedrock:*::foundation-model/*",
+                    "arn:aws:bedrock:*:*:inference-profile/*",
+                    "arn:aws:bedrock:*:*:application-inference-profile/*"
+                ]
             )
         )
-        
+
+        location_alert_agent_role.add_to_policy(
+            iam.PolicyStatement(
+                sid="AmazonBedrockAgentInferencProfilePolicy2",
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    "bedrock:GetInferenceProfile",
+                    "bedrock:ListInferenceProfiles",
+                    "bedrock:DeleteInferenceProfile",
+                    "bedrock:TagResource",
+                    "bedrock:UntagResource",
+                    "bedrock:ListTagsForResource"
+                ],
+                resources=[
+                    "arn:aws:bedrock:*:*:inference-profile/*",
+                    "arn:aws:bedrock:*:*:application-inference-profile/*"
+                ]
+            )
+        )
+
         location_alert_agent_role.add_to_policy(
             iam.PolicyStatement(
                 effect=iam.Effect.ALLOW,
@@ -528,18 +617,42 @@ class BedrockAgentsStack(NestedStack):
             description='Execution role for Emergency Alert Bedrock Agent'
         )
         
-        # Add permissions for Emergency Alert agent to invoke Lambda function
+        # Add permissions for Emergency Alert agent to invoke Lambda function and use inference profiles
         emergency_alert_agent_role.add_to_policy(
             iam.PolicyStatement(
+                sid="AmazonBedrockAgentInferencProfilePolicy1",
                 effect=iam.Effect.ALLOW,
                 actions=[
-                    "bedrock:InvokeModel",
-                    "bedrock:GetFoundationModel"
+                    "bedrock:InvokeModel*",
+                    "bedrock:CreateInferenceProfile"
                 ],
-                resources=["*"]
+                resources=[
+                    "arn:aws:bedrock:*::foundation-model/*",
+                    "arn:aws:bedrock:*:*:inference-profile/*",
+                    "arn:aws:bedrock:*:*:application-inference-profile/*"
+                ]
             )
         )
         
+        emergency_alert_agent_role.add_to_policy(
+            iam.PolicyStatement(
+                sid="AmazonBedrockAgentInferencProfilePolicy2",
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    "bedrock:GetInferenceProfile",
+                    "bedrock:ListInferenceProfiles",
+                    "bedrock:DeleteInferenceProfile",
+                    "bedrock:TagResource",
+                    "bedrock:UntagResource",
+                    "bedrock:ListTagsForResource"
+                ],
+                resources=[
+                    "arn:aws:bedrock:*:*:inference-profile/*",
+                    "arn:aws:bedrock:*:*:application-inference-profile/*"
+                ]
+            )
+        )
+
         emergency_alert_agent_role.add_to_policy(
             iam.PolicyStatement(
                 effect=iam.Effect.ALLOW,
@@ -549,6 +662,7 @@ class BedrockAgentsStack(NestedStack):
         )
         
         # Create Supervisor Agent IAM Role
+        # Create Supervisor Agent IAM Role
         supervisor_agent_role = iam.Role(
             self,
             "SupervisorAgentRole",
@@ -556,7 +670,7 @@ class BedrockAgentsStack(NestedStack):
             description='Execution role for Supervisor Bedrock Agent'
         )
         
-        # Add permissions for Supervisor agent
+        # Add permissions for Supervisor agent to use inference profiles
         supervisor_agent_role.add_to_policy(
             iam.PolicyStatement(
                 sid="AmazonBedrockAgentInferencProfilePolicy1",
@@ -592,6 +706,7 @@ class BedrockAgentsStack(NestedStack):
             )
         )
         
+        # Add permissions for agent collaboration
         supervisor_agent_role.add_to_policy(
             iam.PolicyStatement(
                 sid="AmazonBedrockAgentBedrockFoundationModelPolicy",
@@ -604,9 +719,10 @@ class BedrockAgentsStack(NestedStack):
                     "arn:aws:bedrock:*:*:agent/*",
                     "arn:aws:bedrock:*:*:agent-alias/*"
                 ]
-            )
+             )
         )
         
+        # Add permissions for guardrails
         supervisor_agent_role.add_to_policy(
             iam.PolicyStatement(
                 sid="AmazonBedrockAgentBedrockInvokeGuardrailModelPolicy",
@@ -620,6 +736,7 @@ class BedrockAgentsStack(NestedStack):
             )
         )
         
+        # Add permissions for knowledge bases
         supervisor_agent_role.add_to_policy(
             iam.PolicyStatement(
                 sid="QueryKB",
@@ -794,12 +911,15 @@ class BedrockAgentsStack(NestedStack):
             agent_name="FieldSafetyWeatherAgent",
             agent_resource_role_arn=weather_agent_role.role_arn,
             foundation_model=collaborator_foundation_model,
+            description = "You are a weather forecast agent. On getting access to the latitude, longitude and target_date_time, you will be able to forecast the weather",
             instruction="Goal: Fetch the weather information at a latitude and longitude at a target datetime.,Instructions: Fetch the weather information at a latitude and longitude at a target datetime. You may get the Workorder details in JSON format including workorder location",
             action_groups=[weather_agent_action_group],
             idle_session_ttl_in_seconds=1800,
             auto_prepare=True  # Use autoPrepare instead of custom resource
         )
         
+        weather_agent.node.add_dependency(weather_agent_role)
+
         # Create Location Alert Agent with autoPrepare=True
         location_alert_agent = bedrock.CfnAgent(
             self,
@@ -807,12 +927,15 @@ class BedrockAgentsStack(NestedStack):
             agent_name="FieldSafetyLocationAlertAgent",
             agent_resource_role_arn=location_alert_agent_role.role_arn,
             foundation_model=collaborator_foundation_model,
+            description = "You are a safety officer whose job is to find all reported incidents at the location, all hazards reported the location and then prepare a safety briefing for the field workforce technician",
             instruction="Role: Safety officer, Goal: When a workorder is assigned to a field workforce technician, provide all possible incidents and hazards reported at the location for the workorder to ensure that the technician is well informed",
             action_groups=[location_alert_action_group],
             idle_session_ttl_in_seconds=1800,
             auto_prepare=True  # Use autoPrepare instead of custom resource
         )
         
+        location_alert_agent.node.add_dependency(location_alert_agent_role)
+
         # Create Emergency Alert Agent with autoPrepare=True
         emergency_alert_agent = bedrock.CfnAgent(
             self,
@@ -820,11 +943,14 @@ class BedrockAgentsStack(NestedStack):
             agent_name="FieldSafetyEmergencyAlertAgent",
             agent_resource_role_arn=emergency_alert_agent_role.role_arn,
             foundation_model=collaborator_foundation_model,
+            description = "Agent that fetches the Emergency warnings and alerts for a given location",
             instruction="You are an emergency assistant that provides emergency alerts for specific locations. Fetch the emergency warnings at a latitude and longitude.You will get the latitude and longitude details from Workorder location.",
             action_groups=[emergency_alert_action_group],
             idle_session_ttl_in_seconds=1800,
             auto_prepare=True  # Use autoPrepare instead of custom resource
         )
+
+        emergency_alert_agent.node.add_dependency(emergency_alert_agent_role)
         
         # Create agent aliases
         weather_agent_alias = bedrock.CfnAgentAlias(
@@ -860,7 +986,8 @@ class BedrockAgentsStack(NestedStack):
             agent_name="FieldSafetySupervisorAgent",
             agent_resource_role_arn=supervisor_agent_role.role_arn,
             foundation_model=supervisor_foundation_model,
-            instruction="""You are a Workorder Safety helper bot. You must perform hazard, emergency and weather checks against a supplied work order. When you receive a work order, extract the workorder and location information from the JSON and perform hazard, weather, and emergency checks using provided agents. You must make a call to all the available collaborators to come up with a comprehensive safety briefing. The report must be returned in valid HTML format with proper structure and semantic tags for rendering on a web application. Use headings, paragraphs, bullet points, and other appropriate HTML elements to organize the content. The report must start with a proper title.""",
+            description = "A specialized safety report generator that performs work order safety assessment and generates a comprehensive Work Order Safety Briefiing in HTML format.",
+            instruction="""You are a Workorder Safety helper bot. You must perform hazard, emergency and weather checks against a supplied work order. When you receive a work order in JSON format, extract the workorder and location information from the JSON and perform hazard, weather, and emergency checks using provided agents. You must make a call to all available collaborators to create a comprehensive safety briefing.  IMPORTANT:  Do NOT include any internal reasoning, agent thoughts, or process steps in the final report.  Only output the final safety report in valid HTML, suitable for rendering in a web application.  The report must have a clear title and use proper HTML structure: headings, paragraphs, bullet points, and semantic tags.  The output must be strictly limited to the HTML report content-do not include any other text, logs, or explanations""",
             idle_session_ttl_in_seconds=1800,
             auto_prepare=True,  # Use autoPrepare instead of custom resource
             # Add agent collaboration configuration
@@ -870,29 +997,31 @@ class BedrockAgentsStack(NestedStack):
                     agent_descriptor=bedrock.CfnAgent.AgentDescriptorProperty(
                         alias_arn=weather_agent_alias.attr_agent_alias_arn
                     ),
-                    collaboration_instruction="Use this agent to get weather forecasts for specific locations and times.",
+                    collaboration_instruction="Use this agent to get weather forecast for work order location and time.",
                     collaborator_name="WeatherAgent",
-                    relay_conversation_history="TO_COLLABORATOR"
+                    relay_conversation_history="DISABLED"
                 ),
                 bedrock.CfnAgent.AgentCollaboratorProperty(
                     agent_descriptor=bedrock.CfnAgent.AgentDescriptorProperty(
                         alias_arn=location_alert_agent_alias.attr_agent_alias_arn
                     ),
-                    collaboration_instruction="Use this agent to get safety alerts for work order locations.",
+                    collaboration_instruction="Use this agent to get hazards and incidents for work order location.",
                     collaborator_name="LocationAlertAgent",
-                    relay_conversation_history="TO_COLLABORATOR"
+                    relay_conversation_history="DISABLED"
                 ),
                 bedrock.CfnAgent.AgentCollaboratorProperty(
                     agent_descriptor=bedrock.CfnAgent.AgentDescriptorProperty(
                         alias_arn=emergency_alert_agent_alias.attr_agent_alias_arn
                     ),
-                    collaboration_instruction="Use this agent to get emergency alerts for specific locations.",
+                    collaboration_instruction="Use this agent to get emergency alerts for work order location.",
                     collaborator_name="EmergencyAlertAgent",
-                    relay_conversation_history="TO_COLLABORATOR"
+                    relay_conversation_history="DISABLED"
                 )
             ]
         )
         
+        supervisor_agent.node.add_dependency(supervisor_agent_role)
+
         # Create Supervisor Agent Alias
         supervisor_agent_alias = bedrock.CfnAgentAlias(
             self,

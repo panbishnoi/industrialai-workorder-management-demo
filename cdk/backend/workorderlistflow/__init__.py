@@ -9,6 +9,7 @@ from aws_cdk import (
     Names,
     Duration,
     RemovalPolicy,
+    aws_logs as logs,
 )
 from constructs import Construct
 
@@ -29,10 +30,23 @@ class WorkOrderApiStack(Construct):
     ) -> None:
         super().__init__(scope, construct_id)
 
+        # Define function name first
+        function_name = f"{construct_id.lower()}-get-workorders"
+        
+        # Create explicit log group for work order function
+        work_order_log_group = logs.LogGroup(
+            self,
+            "WorkOrderLogGroup",
+            log_group_name=f"/aws/lambda/{function_name}",
+            retention=logs.RetentionDays.ONE_WEEK,
+            removal_policy=RemovalPolicy.DESTROY
+        )
+        
         # a lambda function process the customer's question
         work_order_fn = lambda_python.PythonFunction(
             self,
             "Get WorkOrders",
+            function_name=function_name,
             entry=f"{os.path.dirname(os.path.realpath(__file__))}/workorders",
             index="workorders.py",
             handler="lambda_handler",
@@ -46,6 +60,7 @@ class WorkOrderApiStack(Construct):
                 "LocationTableName": dynamo_db_location_table,
             },
         )
+
 
         work_order_fn_policy = iam.Policy(self, "WorkOrdersFnPolicy")
 

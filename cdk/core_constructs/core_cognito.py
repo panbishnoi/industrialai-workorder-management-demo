@@ -7,6 +7,7 @@ from aws_cdk import (
     CfnOutput,
     aws_cognito as cognito,
     aws_iam as iam,
+    RemovalPolicy,
 )
 from constructs import Construct
 from cdk_nag import NagSuppressions, NagPackSuppression
@@ -41,7 +42,8 @@ class CoreCognito(Construct):
                 email_subject="Verify your email for our app",
                 email_body="Thanks for signing up! Your verification code is {####}",
                 email_style=cognito.VerificationEmailStyle.CODE
-            )
+            ),
+            removal_policy=RemovalPolicy.DESTROY
         )
 
 
