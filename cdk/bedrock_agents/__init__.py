@@ -360,6 +360,7 @@ class BedrockAgentsStack(NestedStack):
                 "CONTROL_MEASURES_TABLE_NAME": control_measures_table.table_name
             }
         )
+        data_import_function.node.add_dependency(data_import_log_group)
         
         # Add NAG suppression for Lambda runtime
         NagSuppressions.add_resource_suppressions(

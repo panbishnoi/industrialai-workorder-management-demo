@@ -129,6 +129,7 @@ class FrontendStack(NestedStack):
             }
         )
 
+        config_lambda_log_group.node.add_dependency(config_lambda)
         # Grant the Lambda function permissions to read/write to the S3 bucket
         webapp_bucket.grant_read_write(config_lambda)
 
