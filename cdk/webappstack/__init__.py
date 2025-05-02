@@ -174,7 +174,7 @@ class FrontendStack(NestedStack):
             self, "WebACL",
             name="WebACLTest",
             description="WAF rules for CloudFront",
-            scope="CLOUDFRONT",
+            scope="REGIONAL",
             default_action={
                 "allow": {}
             },

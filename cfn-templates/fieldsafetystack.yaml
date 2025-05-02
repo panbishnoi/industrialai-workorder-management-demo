@@ -31,6 +31,144 @@ Parameters:
       - "no"
 
 Resources:
+  # STEP 1: Create all log groups first
+  CodeBuildLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/codebuild/FieldSafetyCodeBuild-${AWS::StackName}"
+      RetentionInDays: 7
+      DeletionPolicy: Delete
+
+  CFNResponseFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/CFNResponseFunction-${AWS::StackName}"
+      RetentionInDays: 7
+      DeletionPolicy: Delete
+
+  BuildTriggerLambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/BuildTriggerLambda-${AWS::StackName}"
+      RetentionInDays: 7
+      DeletionPolicy: Delete
+      
+  StepFunctionsLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/states/${AWS::StackName}-BuildStateMachine"
+      RetentionInDays: 7
+      DeletionPolicy: Delete
+
+  # STEP 2: Create all IAM roles
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: codebuild.amazonaws.com
+          Action: sts:AssumeRole
+      Policies:
+      - PolicyName: CDKBootstrapPermissions1
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action: "*"
+            Resource: "*"
+
+  StepFunctionsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: states.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: StepFunctionsPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+                - "codebuild:StartBuild"
+                - "codebuild:BatchGetBuilds"
+                - "lambda:InvokeFunction"
+                - "states:CreateStateMachine"
+                - "states:DeleteStateMachine"
+                - "states:DescribeStateMachine"
+                - "states:StartExecution"
+                - "states:StopExecution"
+                - "states:DescribeExecution"
+                - "states:GetExecutionHistory"
+              Resource: 
+                - "*"
+        - PolicyName: StepFunctionsAdditionalPermissions
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+                - "events:PutRule"
+                - "events:PutTargets"
+                - "events:DescribeRule"
+                - "events:DeleteRule"
+                - "events:RemoveTargets"
+                - "iam:PassRole"
+                - "iam:GetRole"
+              Resource: "*"
+
+  CFNResponseRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  BuildTriggerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: StepFunctionsStartExecution
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: states:StartExecution
+                Resource: "*"
+        - PolicyName: CloudFormationDeleteStack
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudformation:DeleteStack
+                  - cloudformation:ListStacks
+                  - cloudformation:DescribeStacks
+                Resource: "*"
+
+  # STEP 3: Create CodeBuild project
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
@@ -109,73 +247,84 @@ Resources:
               - node_modules/**/*
               - /root/.npm/**/*
               - /root/.cache/yarn/**/*
-  CodeBuildServiceRole:
-    Type: AWS::IAM::Role
+
+  # STEP 4: Create Lambda functions
+  CFNResponseFunction:
+    Type: AWS::Lambda::Function
     Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service: codebuild.amazonaws.com
-          Action: sts:AssumeRole
-      Policies:
-      - PolicyName: CDKBootstrapPermissions1
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: Allow
-            Action: "*"
-            Resource: "*"
-  StepFunctionsRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: states.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: StepFunctionsPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-            - Effect: Allow
-              Action:
-                - "codebuild:StartBuild"
-                - "codebuild:BatchGetBuilds"
-                - "lambda:InvokeFunction"
-                - "states:CreateStateMachine"
-                - "states:DeleteStateMachine"
-                - "states:DescribeStateMachine"
-                - "states:StartExecution"
-                - "states:StopExecution"
-                - "states:DescribeExecution"
-                - "states:GetExecutionHistory"
-              Resource: 
-                - !GetAtt CodeBuildProject.Arn
-                - !GetAtt CFNResponseFunction.Arn
-                - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:*"
-                - !Sub "arn:aws:states:${AWS::Region}:${AWS::AccountId}:execution:*"
-        - PolicyName: StepFunctionsAdditionalPermissions
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-            - Effect: Allow
-              Action:
-                - "events:PutRule"
-                - "events:PutTargets"
-                - "events:DescribeRule"
-                - "events:DeleteRule"
-                - "events:RemoveTargets"
-                - "iam:PassRole"
-                - "iam:GetRole"
-              Resource: "*"
+      FunctionName: !Sub "CFNResponseFunction-${AWS::StackName}"
+      Handler: index.handler
+      Runtime: python3.11
+      Timeout: 30
+      Role: !GetAtt CFNResponseRole.Arn
+      Code:
+        ZipFile: |
+          import json
+          import urllib3
+          
+          SUCCESS = "SUCCESS"
+          FAILED = "FAILED"
+          
+          def send(event, context, response_status, response_data):
+              # Ensure BuildStatus is included in the response data
+              if 'BuildStatus' not in response_data:
+                  if response_status == SUCCESS:
+                      response_data['BuildStatus'] = 'COMPLETED'
+                  else:
+                      response_data['BuildStatus'] = 'FAILED'
+              
+              response_body = {
+                  'Status': response_status,
+                  'Reason': 'See the details in CloudWatch Log Stream: ' + context.log_stream_name,
+                  'PhysicalResourceId': event.get('PhysicalResourceId', context.log_stream_name),
+                  'StackId': event['StackId'],
+                  'RequestId': event['RequestId'],
+                  'LogicalResourceId': event['LogicalResourceId'],
+                  'Data': response_data
+              }
+              
+              http = urllib3.PoolManager()
+              try:
+                  response = http.request(
+                      'PUT',
+                      event['ResponseURL'],
+                      body=json.dumps(response_body).encode('utf-8'),
+                      headers={'Content-Type': 'application/json'}
+                  )
+                  print(f"Status code: {response.status}")
+              except Exception as e:
+                  print(f"Error sending response: {str(e)}")
+                  raise
+          
+          def handler(event, context):
+              try:
+                  print(f"Received event: {json.dumps(event)}")
+                  status = SUCCESS if event.get('Status') == 'SUCCESS' else FAILED
+                  
+                  # Prepare response data with BuildStatus
+                  response_data = {
+                      'BuildId': event.get('PhysicalResourceId'),
+                      'BuildStatus': 'COMPLETED' if status == SUCCESS else 'FAILED'
+                  }
+                  
+                  # Include any additional data from the event
+                  if 'Data' in event and isinstance(event['Data'], dict):
+                      for key, value in event['Data'].items():
+                          response_data[key] = value
+                  
+                  send(event, context, status, response_data)
+              except Exception as e:
+                  print(f"Error in handler: {str(e)}")
+                  send(event, context, FAILED, {
+                      'Error': str(e),
+                      'BuildStatus': 'FAILED'
+                  })
+
+  # STEP 5: Create Step Functions state machine
   BuildStateMachine:
     Type: AWS::StepFunctions::StateMachine
     Properties:
+      StateMachineName: !Sub "${AWS::StackName}-BuildStateMachine"
       DefinitionString: !Sub |
         {
           "Comment": "State machine for managing CodeBuild deployment",
@@ -259,123 +408,15 @@ Resources:
           }
         }
       RoleArn: !GetAtt StepFunctionsRole.Arn
-  CFNResponseRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: lambda.amazonaws.com
-            Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-  CFNResponseFunction:
-    Type: AWS::Lambda::Function
-    Properties:
-      Handler: index.handler
-      Runtime: python3.11
-      Timeout: 30  # Add timeout
-      Role: !GetAtt CFNResponseRole.Arn
-      Code:
-        ZipFile: |
-          import json
-          import urllib3
-          
-          SUCCESS = "SUCCESS"
-          FAILED = "FAILED"
-          
-          def send(event, context, response_status, response_data):
-              # Ensure BuildStatus is included in the response data
-              if 'BuildStatus' not in response_data:
-                  if response_status == SUCCESS:
-                      response_data['BuildStatus'] = 'COMPLETED'
-                  else:
-                      response_data['BuildStatus'] = 'FAILED'
-              
-              response_body = {
-                  'Status': response_status,
-                  'Reason': 'See the details in CloudWatch Log Stream: ' + context.log_stream_name,
-                  'PhysicalResourceId': event.get('PhysicalResourceId', context.log_stream_name),
-                  'StackId': event['StackId'],
-                  'RequestId': event['RequestId'],
-                  'LogicalResourceId': event['LogicalResourceId'],
-                  'Data': response_data
-              }
-              
-              http = urllib3.PoolManager()
-              try:
-                  response = http.request(
-                      'PUT',
-                      event['ResponseURL'],
-                      body=json.dumps(response_body).encode('utf-8'),
-                      headers={'Content-Type': 'application/json'}
-                  )
-                  print(f"Status code: {response.status}")
-              except Exception as e:
-                  print(f"Error sending response: {str(e)}")
-                  raise
-          
-          def handler(event, context):
-              try:
-                  print(f"Received event: {json.dumps(event)}")
-                  status = SUCCESS if event.get('Status') == 'SUCCESS' else FAILED
-                  
-                  # Prepare response data with BuildStatus
-                  response_data = {
-                      'BuildId': event.get('PhysicalResourceId'),
-                      'BuildStatus': 'COMPLETED' if status == SUCCESS else 'FAILED'
-                  }
-                  
-                  # Include any additional data from the event
-                  if 'Data' in event and isinstance(event['Data'], dict):
-                      for key, value in event['Data'].items():
-                          response_data[key] = value
-                  
-                  send(event, context, status, response_data)
-              except Exception as e:
-                  print(f"Error in handler: {str(e)}")
-                  send(event, context, FAILED, {
-                      'Error': str(e),
-                      'BuildStatus': 'FAILED'
-                  })
-  BuildTriggerRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: lambda.amazonaws.com
-            Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-      Policies:
-        - PolicyName: StepFunctionsStartExecution
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action: states:StartExecution
-                Resource: !Ref BuildStateMachine
-        - PolicyName: CloudFormationDeleteStack
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - cloudformation:DeleteStack
-                  - cloudformation:ListStacks
-                  - cloudformation:DescribeStacks
-                Resource: "*"
+
+  # STEP 6: Create BuildTriggerLambda
   BuildTriggerLambda:
     Type: AWS::Lambda::Function
     Properties:
+      FunctionName: !Sub "BuildTriggerLambda-${AWS::StackName}"
       Handler: index.handler
       Runtime: python3.11
-      Timeout: 60  # Add timeout to prevent Lambda timeout issues
+      Timeout: 60
       Role: !GetAtt BuildTriggerRole.Arn
       Environment:
         Variables:
@@ -469,15 +510,13 @@ Resources:
               except Exception as e:
                   print(f"Error sending response: {str(e)}")
                   raise
+
+  # STEP 7: Create the custom resource
   BuildTrigger:
     Type: Custom::BuildTrigger
-    DependsOn:
-      - CodeBuildProject
     Properties:
-      ServiceToken:
-        Fn::GetAtt:
-        - BuildTriggerLambda
-        - Arn
+      ServiceToken: !GetAtt BuildTriggerLambda.Arn
+
 Outputs:
   DeploymentStatus:
     Description: Status of the deployment
