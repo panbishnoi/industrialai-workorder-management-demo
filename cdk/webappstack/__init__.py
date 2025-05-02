@@ -169,42 +169,6 @@ class FrontendStack(NestedStack):
         # Ensure the custom resource runs after the bucket deployment completes
         config_custom_resource.node.add_dependency(bucket_deployment)
 
-        # Create WAF Web ACL
-        web_acl = wafv2.CfnWebACL(
-            self, "WebACL",
-            name="WebACLTest",
-            description="WAF rules for CloudFront",
-            scope="REGIONAL",
-            default_action={
-                "allow": {}
-            },
-            visibility_config={
-                "cloudWatchMetricsEnabled": True,
-                "metricName": "WebACLMetric",
-                "sampledRequestsEnabled": True
-            },
-            rules=[
-                wafv2.CfnWebACL.RuleProperty(
-                    name="AWSManagedRules",
-                    priority=0,
-                    override_action={
-                        "none": {}
-                    },
-                    statement={
-                        "managedRuleGroupStatement": {
-                            "vendorName": "AWS",
-                            "name": "AWSManagedRulesCommonRuleSet",
-                            "excludedRules": []
-                        }
-                    },
-                    visibility_config={
-                        "sampledRequestsEnabled": True,
-                        "cloudWatchMetricsEnabled": True,
-                        "metricName": "AWSManagedRulesMetric"
-                    }
-                )
-            ]
-        )
 
         # Create Origin Access Control
         origin_access_control = cloudfront.CfnOriginAccessControl(
@@ -228,7 +192,6 @@ class FrontendStack(NestedStack):
                 cache_policy=cloudfront.CachePolicy.CACHING_OPTIMIZED
             ),
             default_root_object="index.html",
-            web_acl_id=web_acl.attr_arn
         )
         self.frontend_url = f"https://{distribution.distribution_domain_name}"
         # Output CloudFront URL
